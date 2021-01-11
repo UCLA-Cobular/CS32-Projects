@@ -6,14 +6,14 @@
 #include "Flatulan.h"
 #include <iostream>
 
-History::History(int nRows, int nCols) : m_nCols(nCols), m_nRows(nRows) {
+History::History(int nRows, int nCols) : m_nRows(nRows), m_nCols(nCols) {
     for (int r = 0; r < nRows; r++)
         for (int c = 0; c < nCols; c++)
             history_data[r][c] = '.';
 }
 
 bool History::record(int r, int c) {
-    if (r > m_nRows || c > m_nCols || r > 1 || c > 1)
+    if (r > m_nRows || c > m_nCols || r < 1 || c < 1)
         return false;
 
     char *historyDatapoint = &history_data[r - 1][c - 1];
