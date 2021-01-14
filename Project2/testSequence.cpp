@@ -5,6 +5,7 @@
 
 #include "Sequence.h"
 #include "testScoreList.cpp"
+#include "testnewSequence.cpp"
 #include <cassert>
 #include <string>
 #include <iostream>

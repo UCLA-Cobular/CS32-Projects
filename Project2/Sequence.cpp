@@ -20,11 +20,11 @@ int Sequence::size() const {
 
 int Sequence::insert(int pos, const ItemType &value) {
     // If pos is outside the size of the current array or is greater than or equal to the max number of items, fail.
-    if (pos < 0 || pos > size() || isFull())
+    if (pos < 0 || pos > size() || size() >= DEFAULT_MAX_ITEMS)
         return -1;
     // Bump items forward
-    for (int i = size(); i >= pos; --i)
-        array[i + 1] = array[i];
+    for (int i = size(); i > pos; --i)
+        array[i] = array[i - 1];
     // Add the item at the newly freed spot
     array[pos] = value;
     // Increment items to keep size up to date
@@ -33,7 +33,7 @@ int Sequence::insert(int pos, const ItemType &value) {
 }
 
 int Sequence::insert(const ItemType &value) {
-    if (isFull()) return -1;
+    if (size() >= DEFAULT_MAX_ITEMS) return -1;
     int p;
     for (p = 0; p < size(); ++p) {
         if (value <= array[p])
@@ -41,10 +41,6 @@ int Sequence::insert(const ItemType &value) {
     }
     return insert(p, value);
 }
-
-/// Checks if the list is currently full
-/// @return true if full, false otherwise
-bool Sequence::isFull() const { return size() >= DEFAULT_MAX_ITEMS; }
 
 bool Sequence::erase(int pos) {
     if (pos < 0 || pos >= size())
@@ -119,12 +115,4 @@ void Sequence::dump() const {
     int i;
     for (i = 0; i < size(); ++i) std::cerr << array[i] << "|";
     std::cerr << "|" << array[i] << "::" << size() << std::endl;
-}
-
-/// Bump everything in the list past pos up one index
-/// @param pos the position to move everything past. Will be open at the end of this operation.
-/// @return true if successful, false otherwise
-bool Sequence::bumpForward(int pos) {
-    if (isFull()) return false;
-    return true;
 }

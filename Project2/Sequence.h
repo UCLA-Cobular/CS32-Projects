@@ -68,13 +68,8 @@ public:
     void dump() const;
 
 private:
-    Sequence &copy(const Sequence &src);
-    bool bumpForward(int pos);
-    bool isFull() const;
-
     ItemType array[DEFAULT_MAX_ITEMS];
     int items = 0;
-
 };
 
 
