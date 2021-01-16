@@ -3,7 +3,7 @@
 //
 
 #include "ScoreList.h"
-#include "Sequence.h"
+//#include "Sequence.h"
 
 ScoreList::ScoreList() {
     m_sequence = Sequence();

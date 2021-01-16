@@ -5,7 +5,6 @@
 #define PROJECT2_TESTSCORELIST_CPP
 #ifdef PROJECT2_TESTSCORELIST_CPP
 
-#ifdef LONG
 
 #include "ScoreList.h"
 #include <cassert>
@@ -30,7 +29,5 @@ void testScoreList() {
     assert(scoreList2.maximum() == 100);
 
 }
-
-#endif // LONG
 
 #endif // PROJECT2_TESTSCORELIST_CPP

@@ -5,11 +5,9 @@
 
 #include "Sequence.h"
 #include "testScoreList.cpp"
-#include "testnewSequence.cpp"
 #include <cassert>
 #include <string>
 #include <iostream>
-
 
 using namespace std;
 
@@ -108,10 +106,8 @@ int main() {
     assert(s.find("laobing") == -1);
     assert(s.insert("laobing") == 0);
     assert(s.size() == 1  &&  s.find("laobing") == 0);
-
 #endif
+
     cout << "Passed all tests" << endl;
-
-
     return 0;
 }
