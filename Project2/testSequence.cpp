@@ -4,7 +4,6 @@
 //#define STRING
 
 #include "Sequence.h"
-#include "testScoreList.cpp"
 #include <cassert>
 #include <string>
 #include <iostream>
@@ -63,8 +62,6 @@ int main() {
     assert(s2.size() == 8 && s2.find(1) == 0 && s2.find(22) == 1 && s2.find(31) == 2 && s2.find(33) == 3 &&
            s2.find(41) == 4 && s2.find(43) == 5 && s2.find(55) == 6 && s2.find(83) == 7);
 //    s2.dump();
-
-    testScoreList();
 
 #endif
 

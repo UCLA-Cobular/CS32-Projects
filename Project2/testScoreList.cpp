@@ -9,7 +9,7 @@
 #include "ScoreList.h"
 #include <cassert>
 
-void testScoreList() {
+int main() {
     ScoreList scoreList1;
     assert(scoreList1.add(100) == true && scoreList1.add(80) == true && scoreList1.add(1) == true &&
            scoreList1.add(40) == true && scoreList1.add(50) == true && scoreList1.size() == 5);
