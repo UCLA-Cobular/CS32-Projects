@@ -28,7 +28,8 @@ Sequence &Sequence::operator=(const Sequence &src) {
     if (&src == this) return *this;
     delete [] array;
     items = src.items;
-    array = new ItemType[src.items];
+    max_items = src.max_items;
+    array = new ItemType[src.max_items];
     for (int i = 0; i < src.items; ++i) {
         this->array[i] = src.array[i];
     }
@@ -50,8 +51,9 @@ int Sequence::insert(int pos, const ItemType &value) {
     if (pos < 0 || pos > size() || size() >= max_items)
         return -1;
     // Bump items forward
-    for (int i = size(); i > pos; --i)
-        array[i] = array[i - 1];
+    if (size() > 0)
+        for (int i = size(); i > pos; --i)
+            array[i] = array[i - 1];
     // Add the item at the newly freed spot
     array[pos] = value;
     // Increment items to keep size up to date
