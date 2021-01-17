@@ -6,7 +6,7 @@
 #define PROJECT2_SCORELIST_H
 
 
-#include "Sequence.h"
+#include "newSequence.h"
 #include <limits>
 
 const unsigned long NO_SCORE = std::numeric_limits<unsigned long>::max();
