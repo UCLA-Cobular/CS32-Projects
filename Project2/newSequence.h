@@ -5,6 +5,9 @@
 #ifndef PROJECT2_NEWSEQUENCE_H
 #define PROJECT2_NEWSEQUENCE_H
 
+#include <string>
+
+//using ItemType = std::string;
 using ItemType = unsigned long;
 const int DEFAULT_MAX_ITEMS = 150;
 
