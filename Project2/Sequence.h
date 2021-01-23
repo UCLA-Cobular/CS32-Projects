@@ -13,34 +13,35 @@ using ItemType = std::string;
 
 class Sequence {
 public:
-    Sequence();
-    ~Sequence();
-    Sequence(const Sequence &sequence);
-    Sequence &operator=(const Sequence &sequence);
+    Sequence();  // tested
+    ~Sequence();  // tested
+    Sequence(const Sequence &sequence);  // tested
+    Sequence &operator=(const Sequence &sequence);  // tested
     bool empty() const;  // tested
     int size() const;  // tested
     int insert(int pos, const ItemType &value);  // tested
-    int insert(const ItemType &value);
+    int insert(const ItemType &value);  // tested
     bool erase(int pos);  // tested
-    int remove(const ItemType &value);
+    int remove(const ItemType &value);  // tested
     bool get(int pos, ItemType &value) const;  // tested
     bool set(int pos, const ItemType &value);  // tested
-    int find(const ItemType &value) const;
-    void swap(Sequence &other);
+    int find(const ItemType &value) const;  // tested
+    void swap(Sequence &other);  // tested
+    void dump() const;
 
 private:
     class Node;
 
-    Node *first() const;
-    Node *last() const;
-    Node *get_node(int pos) const;
-    void report_null_prt_err() const;
 
-    bool loop_complete();
     Node *m_head;
     int m_current_size;
 
+    Node *first() const;
+    Node *get_node(int pos) const;
+    void report_null_prt_err() const;
+    void erase(Node* target);
 
+    /// The data class that stores the
     class Node {
     public:
         Node(); // Used to create a starter node that refers to itself
@@ -59,6 +60,10 @@ private:
         Node *m_prev;
     };
 };
+
+int subsequence(const Sequence& seq1, const Sequence& seq2);
+void interleave(const Sequence& seq1, const Sequence& seq2, Sequence& result);
+
 
 
 #endif //PROJECT2_SEQUENCE_H

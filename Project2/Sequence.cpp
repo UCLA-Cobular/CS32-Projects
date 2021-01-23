@@ -16,25 +16,42 @@ Sequence::Sequence() {
 }
 
 Sequence::~Sequence() {
-    Node *current_pointer = m_head->getPrevNode();
+    Node *currentPointer = m_head->getPrevNode();
 
     // Loop through, going to the next node then deleting the last one
-    while (current_pointer != m_head) {
-        Node *temp_node = current_pointer->getPrevNode();
-        delete current_pointer;
-        current_pointer = temp_node;
+    while (currentPointer != m_head) {
+        Node *tempNode = currentPointer->getPrevNode();
+        delete currentPointer;
+        currentPointer = tempNode;
     }
     delete m_head;
 }
 
 Sequence::Sequence(const Sequence &sequence) {
-
+    // Size will be made the same by the insert func
+    m_current_size = 0;
+    m_head = new Node();
+    m_head->setNextNode(m_head);
+    m_head->setPrevNode(m_head);
+    // Basic thing is created, now stitch in other nodes
+    int counter;
+    for (counter = 0; counter < sequence.size(); ++counter) {
+        this->insert(sequence.get_node(counter)->getNodeVal());
+    }
 }
 
+/// This works by creating a temp sequence as a copy of the input sequence, then swapping it's values with `this`, so
+///  `this` is now an exact copy of the input sequence. The temp_sequence, which now contains the values that were in
+///  `this`, gets destroyed by the destructor when leaving scope.
+/// @param sequence The input sequence to write over this one.
+/// @return *`this`, which is now an exact copy of the input sequence
 Sequence &Sequence::operator=(const Sequence &sequence) {
     if (&sequence == this) return *this;
+
+    Sequence temp_sequence(sequence);
+    this->swap(temp_sequence);
+
     return *this;
-//    return nullptr;
 }
 
 bool Sequence::empty() const {
@@ -62,7 +79,7 @@ int Sequence::insert(int pos, const ItemType &value) {
     if (prev == nullptr) report_null_prt_err();
 
     // Create a new item and link it into the list
-    Node* new_node = new Node(value, next, prev);
+    Node *new_node = new Node(value, next, prev);
 
     prev->setNextNode(new_node);
     next->setPrevNode(new_node);
@@ -73,7 +90,19 @@ int Sequence::insert(int pos, const ItemType &value) {
 }
 
 int Sequence::insert(const ItemType &value) {
-    return 0;
+    Node *search_node = first();
+    int index = 0;
+
+    // Loop over the entire list, until the node to search is the head node
+    for (;;) {
+        // Break out if loop comes back to the head
+        if (search_node == m_head) break;
+        // Break out if our result is found
+        if (value <= search_node->getNodeVal()) break;
+        index++;
+        search_node = search_node->getNextNode();
+    }
+    return insert(index, value);
 }
 
 /// If 0 <= pos < size(), remove the item at position pos and return true. Otherwise false
@@ -81,11 +110,11 @@ int Sequence::insert(const ItemType &value) {
 /// @return True if item at pos can be erased, false otherwise (no change)
 bool Sequence::erase(int pos) {
     if (0 <= pos && pos < size()) {
-        Node* nodeToRemove = get_node(pos);
+        Node *nodeToRemove = get_node(pos);
         if (nodeToRemove == nullptr) report_null_prt_err();
 
-        Node* prev = nodeToRemove->getPrevNode();
-        Node* next = nodeToRemove->getNextNode();
+        Node *prev = nodeToRemove->getPrevNode();
+        Node *next = nodeToRemove->getNextNode();
 
         delete nodeToRemove;
 
@@ -103,7 +132,22 @@ bool Sequence::erase(int pos) {
 /// @param value The value to use to search for nodes to remove
 /// @return The number of items removed
 int Sequence::remove(const ItemType &value) {
-    return 0;
+    Node *search_node = first();
+    int counter = 0;
+
+    // Scan the entire list, until the node to search is the head node
+    for (;;) {
+        // Store the next node pointer before we delete the node
+        Node *next_node = search_node->getNextNode();
+        if (search_node->getNodeVal() == value) {
+            erase(search_node);
+            counter++;
+        };
+        search_node = next_node;
+        if (search_node == m_head) break;
+    }
+
+    return counter;
 }
 
 /// Returns the value of the node at said position.
@@ -112,7 +156,7 @@ int Sequence::remove(const ItemType &value) {
 /// @return True if a node is found and false otherwise.
 bool Sequence::get(int pos, ItemType &value) const {
     if (pos >= size()) return false;
-    Node* node = get_node(pos);
+    Node *node = get_node(pos);
     if (node != nullptr) {
         value = node->getNodeVal();
         return true;
@@ -126,7 +170,7 @@ bool Sequence::get(int pos, ItemType &value) const {
 /// @return True if a value is set and false otherwise
 bool Sequence::set(int pos, const ItemType &value) {
     if (0 <= pos && pos < size()) {
-        Node* node = get_node(pos);
+        Node *node = get_node(pos);
         if (node == nullptr) report_null_prt_err();
 
         node->setNodeVal(value);
@@ -135,28 +179,35 @@ bool Sequence::set(int pos, const ItemType &value) {
     return false;
 }
 
+/// Gets the position of the element with value `value` in the list, or -1 if not found
+/// @param value The value to search for
+/// @return The zero-indexed position in the of the item if found, or -1 otherwise.
 int Sequence::find(const ItemType &value) const {
-    return 0;
+    Node *search_node = first();
+    int index = 0;
+
+    // Loop over the entire list, until the node to search is the head node
+    for (;;) {
+        if (search_node == m_head) return -1;
+        if (search_node->getNodeVal() == value) return index;
+        index++;
+        search_node = search_node->getNextNode();
+    }
 }
 
 void Sequence::swap(Sequence &other) {
-
+    Node *temp_head = other.m_head;
+    other.m_head = this->m_head;
+    this->m_head = temp_head;
+    int temp_length = other.m_current_size;
+    other.m_current_size = this->m_current_size;
+    this->m_current_size = temp_length;
 }
 
 /// Returns the first real node in the array. It's what the head node points to.
 /// @return the first node
 Sequence::Node *Sequence::first() const {
     return m_head->getNextNode();
-}
-
-/// Returns the last real node in the array. It's what the head node's reverse pointer points to.
-/// @return the last node
-Sequence::Node *Sequence::last() const {
-    return m_head->getPrevNode();
-}
-
-bool Sequence::loop_complete() {
-    return false;
 }
 
 /// Gets a node of value pos in the sequence. Will return nullptr if the pos is out of range, so don't be dumb.
@@ -176,6 +227,30 @@ void Sequence::report_null_prt_err() const {
     std::cerr << "About to follow a null ptr! Aborting..." << std::endl;
     exit(-1);
 #endif
+}
+
+void Sequence::erase(Sequence::Node *target) {
+    if (target == nullptr) report_null_prt_err();
+    Node *prev = target->getPrevNode();
+    Node *next = target->getNextNode();
+
+    delete target;
+
+    prev->setNextNode(next);
+    next->setPrevNode(prev);
+    m_current_size--;
+}
+
+void Sequence::dump() const {
+    Node *search_node = first();
+
+    // Loop over the entire list, until the node to search is the head node
+    for (;;) {
+        std::cerr << search_node->getNodeVal() << "|";
+        search_node = search_node->getNextNode();
+        if (search_node == m_head) break;
+    }
+    std::cerr << std::endl;
 }
 
 /// Constructs a head node, using itself as a prev and next pointer. This should only be used for the head.
@@ -231,3 +306,10 @@ ItemType Sequence::Node::getNodeVal() const {
 }
 
 
+int subsequence(const Sequence &seq1, const Sequence &seq2) {
+    return 0;
+}
+
+void interleave(const Sequence &seq1, const Sequence &seq2, Sequence &result) {
+
+}
