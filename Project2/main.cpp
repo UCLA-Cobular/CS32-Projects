@@ -116,14 +116,147 @@ int main() {
                su.find("eee") == 4 && su.find("fff") == -1 &&
                su.size() == 5);  // Check that assignment works for other things
     }
+    ///////////////////
+    // Test subsequence
+    ///////////////////
     {
-        // Test subsequence
+        Sequence sa = Sequence();
+        sa.insert("aaa");
+        sa.insert("aaa");
+        sa.insert("aaa");
+        sa.insert("aaa");
+        sa.insert("aaa");
+        sa.insert(0, "bbb");
+        sa.insert(2, "bbb");
+        // bbb|aaa|bbb|aaa|aaa|aaa|aaa
+
+        // sb should fail
+        Sequence sb = Sequence();
+        sb.insert("bbb");
+        sb.insert("bbb");
+        sb.insert("bbb");
+        assert(subsequence(sa, sb) == -1);
+
+        // sc should succeed w/ 0
+        Sequence sc = Sequence();
+        sc.insert(0, "bbb");
+        sc.insert(1, "aaa");
+        assert(subsequence(sa, sc) == 0);
+
+        // sd should succeed with 1
+        Sequence sd = Sequence();
+        sd.insert(0, "aaa");
+        sd.insert(1, "bbb");
+        assert(subsequence(sa, sd) == 1);
+
+        // se should succeed with 2
+        Sequence se = Sequence();
+        se.insert(0, "bbb");
+        se.insert(1, "aaa");
+        se.insert(1, "aaa");
+        assert(subsequence(sa, se) == 2);
+
+        // sf should succeed with 3
+        Sequence sf = Sequence();
+        sf.insert("aaa");
+        sf.insert("aaa");
+        sf.insert("aaa");
+        sf.insert("aaa");
+        assert(subsequence(sa, sf) == 3);
+
+        // sg should succeed with 3
+        Sequence sg = Sequence();
+        sg.insert("aaa");
+        sg.insert("aaa");
+        sg.insert("aaa");
+        assert(subsequence(sa, sg) == 3);
+
+        // sh should fail
+        Sequence sh = Sequence();
+        sh.insert("aaa");
+        sh.insert("aaa");
+        sh.insert("aaa");
+        sh.insert("aaa");
+        sh.insert("aaa");
+        assert(subsequence(sa, sh) == -1);
     }
     {
-        // Test interleave
+        Sequence sa = Sequence();
+
+        // sb should fail
+        Sequence sb = Sequence();
+        sb.insert("bbb");
+        sb.insert("bbb");
+        sb.insert("bbb");
+        assert(subsequence(sa, sb) == -1);
+
     }
+    //////////////////
+    // Test interleave
+    //////////////////
+    {
+        Sequence result = Sequence();
+
+        Sequence sa = Sequence();
+        sa.insert("aaa");
+        sa.insert("bbb");
+        sa.insert("ccc");
+        sa.insert("ddd");
+        sa.insert("eee");
+        sa.insert(0, "fff");
+        sa.insert(2, "ggg");
+
+        Sequence sb = Sequence();
+        sb.insert("zzz");
+        sb.insert("xxx");
+        sb.insert("yyy");
+
+        // Check sizing and content of two with content, larger seq1
+        interleave(sa, sb, result);
+        assert(result.size() == 10);
+        assert(result.find("fff") == 0 && result.find("xxx") == 1 && result.find("aaa") == 2);
+        assert(result.find("yyy") == 3 && result.find("ggg") == 4 && result.find("zzz") == 5);
+        assert(result.find("bbb") == 6 && result.find("ccc") == 7 && result.find("ddd") == 8);
+        assert(result.find("eee") == 9);
+
+        // Check sizing and content of two with content, larger seq2, non-zero content in result
+        interleave(sb, sa, result);
+        assert(result.size() == 10);
+        assert(result.find("fff") == 1 && result.find("xxx") == 0 && result.find("aaa") == 3);
+        assert(result.find("yyy") == 2 && result.find("ggg") == 5 && result.find("zzz") == 4);
+        assert(result.find("bbb") == 6 && result.find("ccc") == 7 && result.find("ddd") == 8);
+        assert(result.find("eee") == 9);
+
+        // Check sizing and content for empty seq2 and non-zero content in result
+        Sequence s0 = Sequence();
+        interleave(sa, s0, result);
+        assert(result.size() == 7);
+        assert(result.find("fff") == 0 && result.find("aaa") == 1 && result.find("ggg") == 2);
+        assert(result.find("bbb") == 3 && result.find("ccc") == 4 && result.find("ddd") == 5);
+        assert(result.find("eee") == 6);
+
+        // Check sizing and content for empty seq1 with empty result
+        interleave(s0, sa, result);
+        assert(result.size() == 7);
+        assert(result.find("fff") == 0 && result.find("aaa") == 1 && result.find("ggg") == 2);
+        assert(result.find("bbb") == 3 && result.find("ccc") == 4 && result.find("ddd") == 5);
+        assert(result.find("eee") == 6);
+
+        // Check sizing and content for empty both with non-empty result
+        result.insert("fff");
+        interleave(s0, s0, result);
+        assert(result.size() == 0);
+
+        // Check interleaving same item twice
+        interleave(sb, sb, result);
+        assert(result.size() == 6);
+        ItemType itemType;
+        assert(result.get(0, itemType) && itemType == "xxx" && result.get(1, itemType) && itemType == "xxx" &&
+               result.get(2, itemType) && itemType == "yyy" && result.get(3, itemType) && itemType == "yyy" &&
+               result.get(4, itemType) && itemType == "zzz" && result.get(5, itemType) && itemType == "zzz");
+        }
 
 
-    std::cerr << "tests fin" << std::endl;
-    return 0;
-}
+        std::cerr << "tests fin" << std::endl;
+        return 0;
+    }

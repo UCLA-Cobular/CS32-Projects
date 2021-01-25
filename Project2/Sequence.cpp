@@ -36,7 +36,7 @@ Sequence::Sequence(const Sequence &sequence) {
     // Basic thing is created, now stitch in other nodes
     int counter;
     for (counter = 0; counter < sequence.size(); ++counter) {
-        this->insert(sequence.get_node(counter)->getNodeVal());
+        this->insert(counter, sequence.get_node(counter)->getNodeVal());
     }
 }
 
@@ -306,10 +306,75 @@ ItemType Sequence::Node::getNodeVal() const {
 }
 
 
+/// Returns the start of the seq2 consecutively in seq1, if it exists, or returns -1
+/// @param seq1 The sequence to find subsequence seq2 in.
+/// @param seq2 The subsequence to find inside seq2
+/// @return The position of the start of the subsequence in the overall sequence, or -1 if not found
 int subsequence(const Sequence &seq1, const Sequence &seq2) {
-    return 0;
+    // The plan: Compare the first value in seq2 to the current item in seq1, incrementing seq1_count by one until something is found.
+    //  Then, store the position in seq1 in seq1_saved_pos and go to the check subsystem.
+    //   Check subsystem can either succeed, in which case return seq1_count
+    //   Check subsystem can fail, in which case resume checking back at seq1_count
+    // If nothing is found, return 0.
+    if (seq2.size() == 0) return -1;
+
+    ItemType seq1_val;
+    ItemType seq2_val;
+    // This skips loops where there are less items left than seq2, in which case a match is impossible
+    int end_loop = seq1.size() - seq2.size() + 1;
+
+    for (int seq1_count = 0; seq1_count < end_loop; ++seq1_count) {
+        seq1.get(seq1_count, seq1_val);
+        seq2.get(0, seq2_val);
+        // First item match has been found, need to do check subsystem
+        if (seq1_val == seq2_val) {
+            bool match_failed = false;
+            for (int i = 1; i < seq2.size(); ++i) {
+                seq1.get(seq1_count + i, seq1_val);
+                seq2.get(i, seq2_val);
+                // If at any point in the loop, seq1 and seq2 don't match, that means the match has failed so we need
+                //  to set the flag and break out
+                if (seq1_val != seq2_val) {
+                    match_failed = true;
+                    break;
+                }
+            }
+            // If we get here without the flag being set, we know that the check has passed!
+            // That means we just return seq1_count, which stores the index of the start of the subsequence.
+            if (!match_failed) return seq1_count;
+        }
+    }
+
+    // If we've gotten to here, that means we've failed and need to return -1.
+    return -1;
 }
 
 void interleave(const Sequence &seq1, const Sequence &seq2, Sequence &result) {
+    // This way we can make sure result is empty without having to know if it was dynamically allocated or allocated at compiletime.
+    Sequence temp_sequence = Sequence();
+    result = temp_sequence;
+    // Cover the edge cases of one of the list being smaller
+    if (seq1.size() == 0 && seq2.size() == 0) return;
+    else if (seq1.size() == 0) {
+        result = seq2;
+        return;
+    } else if (seq2.size() == 0) {
+        result = seq1;
+        return;
+    }
 
+    int max = seq1.size() > seq2.size() ? seq1.size() : seq2.size();
+
+    ItemType item;
+
+    for (int i = 0; i < max; ++i) {
+        if (i < seq1.size()) {
+            seq1.get(i, item);
+            result.insert(result.size(), item);
+        }
+        if (i < seq2.size()) {
+            seq2.get(i, item);
+            result.insert(result.size(), item);
+        }
+    }
 }
