@@ -315,7 +315,7 @@ int subsequence(const Sequence &seq1, const Sequence &seq2) {
     //  Then, store the position in seq1 in seq1_saved_pos and go to the check subsystem.
     //   Check subsystem can either succeed, in which case return seq1_count
     //   Check subsystem can fail, in which case resume checking back at seq1_count
-    // If nothing is found, return 0.
+    // If nothing is found, return -1.
     if (seq2.size() == 0) return -1;
 
     ItemType seq1_val;
@@ -352,14 +352,18 @@ int subsequence(const Sequence &seq1, const Sequence &seq2) {
 void interleave(const Sequence &seq1, const Sequence &seq2, Sequence &result) {
     // This way we can make sure result is empty without having to know if it was dynamically allocated or allocated at compiletime.
     Sequence temp_sequence = Sequence();
-    result = temp_sequence;
-    // Cover the edge cases of one of the list being smaller
-    if (seq1.size() == 0 && seq2.size() == 0) return;
+    // Cover the edge cases of one of the list being zero
+    if (seq1.size() == 0 && seq2.size() == 0) {
+        result = temp_sequence;
+        return;
+    }
     else if (seq1.size() == 0) {
-        result = seq2;
+        temp_sequence = seq2;
+        result = temp_sequence;
         return;
     } else if (seq2.size() == 0) {
-        result = seq1;
+        temp_sequence = seq1;
+        result = temp_sequence;
         return;
     }
 
@@ -370,11 +374,12 @@ void interleave(const Sequence &seq1, const Sequence &seq2, Sequence &result) {
     for (int i = 0; i < max; ++i) {
         if (i < seq1.size()) {
             seq1.get(i, item);
-            result.insert(result.size(), item);
+            temp_sequence.insert(temp_sequence.size(), item);
         }
         if (i < seq2.size()) {
             seq2.get(i, item);
-            result.insert(result.size(), item);
+            temp_sequence.insert(temp_sequence.size(), item);
         }
     }
+    result = temp_sequence;
 }

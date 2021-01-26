@@ -5,7 +5,7 @@
 #ifndef PROJECT2_SEQUENCE_H
 #define PROJECT2_SEQUENCE_H
 
-#define DEVELOPING
+//#define DEVELOPING
 
 #include <string>
 

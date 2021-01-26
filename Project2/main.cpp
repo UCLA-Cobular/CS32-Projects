@@ -254,6 +254,13 @@ int main() {
         assert(result.get(0, itemType) && itemType == "xxx" && result.get(1, itemType) && itemType == "xxx" &&
                result.get(2, itemType) && itemType == "yyy" && result.get(3, itemType) && itemType == "yyy" &&
                result.get(4, itemType) && itemType == "zzz" && result.get(5, itemType) && itemType == "zzz");
+
+        // Test interleaving the same items as results
+        interleave(sb, sb, sb);
+        assert(sb.size() == 6);
+        assert(result.get(0, itemType) && itemType == "xxx" && result.get(1, itemType) && itemType == "xxx" &&
+               result.get(2, itemType) && itemType == "yyy" && result.get(3, itemType) && itemType == "yyy" &&
+               result.get(4, itemType) && itemType == "zzz" && result.get(5, itemType) && itemType == "zzz");
         }
 
 
