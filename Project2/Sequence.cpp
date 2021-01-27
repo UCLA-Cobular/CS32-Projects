@@ -255,14 +255,14 @@ void Sequence::dump() const {
 
 /// Constructs a head node, using itself as a prev and next pointer. This should only be used for the head.
 /// Does __not__ initialize the value to anything either.
-Sequence::Node::Node() : m_prev(this), m_next(this) {
+Sequence::Node::Node() : m_next(this), m_prev(this) {
 }
 
 /// Constructs a node, given a value and a next and previous node. This basically does the linking for you.
 /// @param val The value to assign this node
 /// @param prev The forward pointer
 /// @param next The reverse pointer
-Sequence::Node::Node(const ItemType &val, Node *next, Node *prev) : m_val(val), m_prev(prev), m_next(next) {
+Sequence::Node::Node(const ItemType &val, Node *next, Node *prev) : m_val(val), m_next(next), m_prev(prev) {
 }
 
 /// Sets the forward pointer for this node

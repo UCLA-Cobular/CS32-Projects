@@ -1,9 +1,9 @@
 # Project 2 Report
 
-## Doublely Linked List Implementation
-My doublely linked list implementaion is circular and contains a dummy node. This means, on instantiation, we create a node that will never have it's value accessed which means we never need to deal with the head pointer is null case, and it means that it's very easy to check when we have completed a loop, simply when the head pointer points to the same thing as either the next pointer or the current pointer, depending on where in the loop we check for that. The curcularity of the loop also helps to reduce edge cases, it means that it is always trivial to find the previous node in the loop, even on the "no items" (just the dummy node) case. In this case, we can still go back one node to get the previous node pointer, and because the pointers are circular, it still points to the dummy node and re-linking the list on insert works well, with the same algorithim in all cases. 
+## Doubly Linked List Implementation
+My doubly linked list implementation is circular and contains a dummy node. This means, on instantiation, we create a node that will never have it's value accessed which means we never need to deal with the head pointer is null case, and it means that it's very easy to check when we have completed a loop, simply when the head pointer points to the same thing as either the next pointer or the current pointer, depending on where in the loop we check for that. The circularity of the loop also helps to reduce edge cases, it means that it is always trivial to find the previous node in the loop, even on the "no items" (just the dummy node) case. In this case, we can still go back one node to get the previous node pointer, and because the pointers are circular, it still points to the dummy node and re-linking the list on insert works well, with the same algorithm in all cases.
 
-My nodes are pretty simple themselves, simply a data member and two pointer members, one for forward and one for reverse. It's public interface is a bit more complex, but it's really only a bunch of getters and setters. The only other thing of note is the constructors, of which there are two. One is only used to create the head node, so it defines it's two pointers as to itself. The other one is the used in other cases, where you feed in two pointers and it sets itself up correctly. This system means that nodes will never have null pointers in themselves, which increases the safety of my implementation significantly.  
+My nodes are pretty simple themselves, simply a data member and two-pointer members, one for forward and one for reverse. Its public interface is a bit more complex, but it's really only a bunch of getters and setters. The only other thing of note is the constructors, of which there are two. One is only used to create the head node, so it defines it's two pointers as to itself. The other one is the used in other cases, where you feed in two pointers and it sets itself up correctly. This system means that nodes will never have null pointers in themselves, which increases the safety of my implementation significantly.
 
 Below are some diagrams of my list
 
@@ -58,11 +58,11 @@ Below are some diagrams of my list
 ```
 
 
-## Algorithim Psudocode
+## Algorithm Pseudocode
 
 
 #### Subsequence
-Explination:
+Explanation:
 * Check if the second sequence is of size 0, if so return -1
 * Compare the first value in `seq2` to the current item in `seq1`, incrementing `seq1_count` by one until something is found and go to the check subsystem.
     * Check subsystem can either succeed, in which case return `seq1_count`
@@ -76,10 +76,10 @@ Check subsystem:
     * If they are not equal, set flag to true and break out of the loop
 * Check if the flag is false. If it is, return `seq1_count`, and if not, resume the above logic until another first character match is found.
 
-This is a good summary of the logic, but please see the code for additional explination as it is well commented. 
+This is a good summary of the logic, but please see the code for additional explanation as it is well commented.
 
 #### Interleave
-Explination: 
+Explanation:
 * Create a temporary sequence that we will write to. This is important so that we can handle the case where `result` is the same as `seq1` or `seq2`, as wiping `result` at the start would cause issues in this case.
 * Check for edge cases:
     * Both `seq1` and `seq2` are empty, in which case we set result to `temp_sequence` and return.
@@ -91,11 +91,11 @@ Explination:
     * If index is smaller than the size of `seq2`, get the next item in `seq2` and insert it at the next item in `temp_sequence`
 * Set result to `temp_sequence` and return
 
-The reason for this unusual set of `if`s in the for loop is so that, in the common case in which `seq1` and `seq2` contain different values, the loop will never overrread on either list but it will still append all the items in the longer list to the `temp_sequence`
+The reason for this unusual set of `if`s in the for loop is so that, in the common case in which `seq1` and `seq2` contain different values, the loop will never overread on either list but it will still append all the items in the longer list to the `temp_sequence`
 
 ## Test Cases
 
-#### Tests for Sequence public funcitons
+#### Tests for Sequence public functions
 ```cpp
 Sequence ss;  // ItemType is std::string
 assert(ss.size() == 0 && ss.empty());  // Test size and empty work on an empty Sequence
