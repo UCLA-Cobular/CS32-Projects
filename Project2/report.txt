@@ -1,6 +1,7 @@
 # Project 2 Report
 
 ## Doubly Linked List Implementation
+
 My doubly linked list implementation is circular and contains a dummy node. This means, on instantiation, we create a node that will never have it's value accessed which means we never need to deal with the head pointer is null case, and it means that it's very easy to check when we have completed a loop, simply when the head pointer points to the same thing as either the next pointer or the current pointer, depending on where in the loop we check for that. The circularity of the loop also helps to reduce edge cases, it means that it is always trivial to find the previous node in the loop, even on the "no items" (just the dummy node) case. In this case, we can still go back one node to get the previous node pointer, and because the pointers are circular, it still points to the dummy node and re-linking the list on insert works well, with the same algorithm in all cases.
 
 My nodes are pretty simple themselves, simply a data member and two-pointer members, one for forward and one for reverse. Its public interface is a bit more complex, but it's really only a bunch of getters and setters. The only other thing of note is the constructors, of which there are two. One is only used to create the head node, so it defines it's two pointers as to itself. The other one is the used in other cases, where you feed in two pointers and it sets itself up correctly. This system means that nodes will never have null pointers in themselves, which increases the safety of my implementation significantly.
@@ -57,45 +58,86 @@ Below are some diagrams of my list
  '------------------------------------------------------------------'
 ```
 
-
 ## Algorithm Pseudocode
 
-
 #### Subsequence
+
 Explanation:
-* Check if the second sequence is of size 0, if so return -1
-* Compare the first value in `seq2` to the current item in `seq1`, incrementing `seq1_count` by one until something is found and go to the check subsystem.
-    * Check subsystem can either succeed, in which case return `seq1_count`
-    * Check subsystem can fail, in which case resume checking back at the next loop, so at `seq1_count + 1`
-* Continue this until there are too few items in the main list that a match is possible. This will be when `seq1_count >= seq1.size() - seq2.size() + 1`. This means we skip loops where it's not possible to have a whole subsequence because seq1 is too short, and also means we will break out of the loop before we overread `seq_1`. If nothing is found, return -1.
+
+- Check if the second sequence is of size 0, if so return -1
+- Compare the first value in `seq2` to the current item in `seq1`, incrementing `seq1_count` by one until something is found and go to the check subsystem.
+  - Check subsystem can either succeed, in which case return `seq1_count`
+  - Check subsystem can fail, in which case resume checking back at the next loop, so at `seq1_count + 1`
+- Continue this until there are too few items in the main list that a match is possible. This will be when `seq1_count >= seq1.size() - seq2.size() + 1`. This means we skip loops where it's not possible to have a whole subsequence because seq1 is too short, and also means we will break out of the loop before we overread `seq_1`. If nothing is found, return -1.
 
 Check subsystem:
-* Set a flag to false
-* Loop over every item in the lists, comparing them. 
-    * If they are equal, move on to the next item
-    * If they are not equal, set flag to true and break out of the loop
-* Check if the flag is false. If it is, return `seq1_count`, and if not, resume the above logic until another first character match is found.
+
+- Set a flag to false
+- Loop over every item in the lists, comparing them.
+  - If they are equal, move on to the next item
+  - If they are not equal, set flag to true and break out of the loop
+- Check if the flag is false. If it is, return `seq1_count`, and if not, resume the above logic until another first character match is found.
 
 This is a good summary of the logic, but please see the code for additional explanation as it is well commented.
 
 #### Interleave
+
 Explanation:
-* Create a temporary sequence that we will write to. This is important so that we can handle the case where `result` is the same as `seq1` or `seq2`, as wiping `result` at the start would cause issues in this case.
-* Check for edge cases:
-    * Both `seq1` and `seq2` are empty, in which case we set result to `temp_sequence` and return.
-    * Just `seq1` is empty, in which case we set result to `seq2` and return
-    * Just `seq2` is empty, in which case we set result to `seq1` and return
-* Then, we set the limit of the upcoming loop to the greater of the length of `seq1` or `seq2`. 
-* Now, we enter into a for loop, starting with an index of 0 and incrementing to max. Every loop:
-    * If index is smaller than the size of `seq1`, get the next item in `seq1` and insert it at the next item in `temp_sequence`
-    * If index is smaller than the size of `seq2`, get the next item in `seq2` and insert it at the next item in `temp_sequence`
-* Set result to `temp_sequence` and return
+
+- Create a temporary sequence that we will write to. This is important so that we can handle the case where `result` is the same as `seq1` or `seq2`, as wiping `result` at the start would cause issues in this case.
+- Check for edge cases:
+  - Both `seq1` and `seq2` are empty, in which case we set result to `temp_sequence` and return.
+  - Just `seq1` is empty, in which case we set result to `seq2` and return
+  - Just `seq2` is empty, in which case we set result to `seq1` and return
+- Then, we set the limit of the upcoming loop to the greater of the length of `seq1` or `seq2`.
+- Now, we enter into a for loop, starting with an index of 0 and incrementing to max. Every loop:
+  - If index is smaller than the size of `seq1`, get the next item in `seq1` and insert it at the next item in `temp_sequence`
+  - If index is smaller than the size of `seq2`, get the next item in `seq2` and insert it at the next item in `temp_sequence`
+- Set result to `temp_sequence` and return
 
 The reason for this unusual set of `if`s in the for loop is so that, in the common case in which `seq1` and `seq2` contain different values, the loop will never overread on either list but it will still append all the items in the longer list to the `temp_sequence`
+
+#### Insert (two parameters)
+
+1. Check if pos < 0 or pos > the list size and if so, return -1 as that insert would fail
+2. Save the pointer to the node currently at that index, as it will become the next pointer
+3. Save the pointer to the previous node as well, as it will become the previous node
+4. Create a new node, using the constructor that takes in two node pointers. This handles the linking of this node
+5. Finally, link the previous and next node back to this node, and increment the current size
+6. Return pos
+
+#### Insert (one parameter)
+
+1. Get the first node and set a counter to zero.
+2. Loop, checking if the search node points to the same node as head, meaning that we have looped and not found anything, or if the target value is smaller than the current node we are looking for, in which case also break out. If neither of these things are found, increment index and check the next node.
+3. When that breaks out, call the two parameter insert with the current value of index and the value to insert.
+   This approach works really well because, when we hit the `search_node == head` case, index is already set to the correct position where the insert needs to be made, namely the end of the list. I'm very happy with how well this system handles the edge cases here.
+
+#### Erase
+
+1. First, check if the pos is valid
+2. Then, get the node we're removing
+3. Store the next and previous node pointers so you can re-link them
+4. Delete the node
+5. re-link the next and previous nodes
+6. Decrement the current size
+
+#### Remove
+
+1. Get the first node and set a counter to zero.
+2. Loop: 
+    - Store the pointer to the next node
+    - Check if the current node's value matches the target value. If true, erase the node and increment counter
+    - Set the next search node to the next node we saved earlier
+    - Check if the search node is the dummy node, in which case break out
+3. Return counter
+
+Side note - you may see `if (nodeToRemove == nullptr) report_null_prt_err();` in the code after every time we get a node. This function, while in development, would write to stderr and exit when called, and I used it as a way to check to see if I ever got a nullptr from anything. It doesn't do anything outside development though, as it's contents are blocked by an `ifdef`.
 
 ## Test Cases
 
 #### Tests for Sequence public functions
+
 ```cpp
 Sequence ss;  // ItemType is std::string
 assert(ss.size() == 0 && ss.empty());  // Test size and empty work on an empty Sequence
@@ -211,6 +253,7 @@ assert(su.find("aaa") == 0 && su.find("bbb") == 1 && su.find("ccc") == 2 && su.f
 ```
 
 #### Tests for `subsequence`
+
 ```cpp
 Sequence sa = Sequence();
 sa.insert("aaa");
@@ -284,6 +327,7 @@ assert(subsequence(s0, sz) == -1);
 ```
 
 #### Tests for `interleave`
+
 ```cpp
 Sequence result = Sequence();
 
