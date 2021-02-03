@@ -1,0 +1,10 @@
+# HW 2
+
+## Problem 2 solution
+(6,4)(6,3)(6,5)(7,5)(8,5)(8,6)(8,7)(8,8)(7,8)(6,6)(5,4)(4,4)
+
+## Problem 4 solution
+(6,4)(5,4)(6,5)(6,3)(4,4)(6,6)(7,5)(3,4)(4,5)(8,5)(2,4)(4,6)
+
+The stack algorithm is what's called a depth first search, as since it explores the latest entries as soon as they are added, it will search "deep" down one single path before, if it hits a dead end, giving up and heading back up the to the most recent intersection. This algorithm is akin to how a human would likely solve a maze, trying paths until they find a dead end and then going back to the last intersection and trying that, then repeating until everything is explored or a solution is found.
+On the other hand, the queue based system is called a breadth first search, since it will always explore the oldest item in the list. This means that, instead of going down any one possible path, it will uniformly explore all paths at the same time, doing one step into each possible path before moving on to the next. This is not a way a human would likely solve a maze.
