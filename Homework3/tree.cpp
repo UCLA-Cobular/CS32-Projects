@@ -1,22 +1,3 @@
-//
-// Created by jdc10 on 2/6/2021.
-//
-
-#include <iostream>
-
-void dump(const double a1[], int n1, const double a2[], int n2) {
-    std::cout << "a1|";
-    for (int i = 0; i < n1; ++i) {
-        std::cout << a1[i] << "|";
-    }
-    std::cout << " /// a2|";
-
-    for (int i = 0; i < n2; ++i) {
-        std::cout << a2[i] << "|";
-    }
-    std::cout << std::endl;
-}
-
 // Return the number of ways that all n1 elements of a1 appear in
 // the n2 element array a2 in the same order (though not necessarily
 // consecutively).  The empty sequence (i.e. one where n1 is 0)
@@ -28,8 +9,7 @@ void dump(const double a1[], int n1, const double a2[], int n2) {
 //	10 40 30			2
 //	20 10 40			0
 //	50 40 30			3
-int countIsIn(const double a1[], int n1, const double a2[], int n2)
-{
+int countIsIn(const double a1[], int n1, const double a2[], int n2) {
     if (n2 < 0) return 0; // Handle the negative case
     if (n1 <= 0)
         return 1; // If n1 is ever 0, then we know that we've gotten to the bottom of it and we can return 1
@@ -42,31 +22,18 @@ int countIsIn(const double a1[], int n1, const double a2[], int n2)
 
     int count = 0;
 
-    count = countIsIn(a1, n1, a2, n2 - 1);
-    // We want this structure of a2:
-    // a b c d e f g 7
-    // a b c d e f   6
-    // a b c d e     5
-    // a b c d       4
-    // a b c         3
-    // a b           2
-    // a             1
-
-    dump(a1, n1, a2, n2);
-//    std::cout << "check" << std::endl;
     if (a1[0] == a2[0]) // Match found
     {
         count += countIsIn(a1 + 1, n1 - 1, a2 + 1, n2 - 1); // Match found, increment both items
+        count += countIsIn(a1, n1, a2 + 1, n2 - 1);
     } else {
         count += countIsIn(a1, n1, a2 + 1, n2 - 1); // Match not found for this item in superlist, check next item
     }
-//    std::cout << count << std::endl;
     return count;
 }
 
 // Exchange two doubles
-void exchange(double& x, double& y)
-{
+void exchange(double &x, double &y) {
     double t = x;
     x = y;
     y = t;
@@ -88,8 +55,7 @@ void exchange(double& x, double& y)
 // All the elements > divider end up in no particular order.
 // All the elements < divider end up in no particular order.
 void divide(double a[], int n, double divider,
-            int& firstNotGreater, int& firstLess)
-{
+            int &firstNotGreater, int &firstLess) {
     if (n < 0)
         n = 0;
 
@@ -105,17 +71,12 @@ void divide(double a[], int n, double divider,
     firstNotGreater = 0;
     firstLess = n;
     int firstUnknown = 0;
-    while (firstUnknown < firstLess)
-    {
-        if (a[firstUnknown] < divider)
-        {
+    while (firstUnknown < firstLess) {
+        if (a[firstUnknown] < divider) {
             firstLess--;
             exchange(a[firstUnknown], a[firstLess]);
-        }
-        else
-        {
-            if (a[firstUnknown] > divider)
-            {
+        } else {
+            if (a[firstUnknown] > divider) {
                 exchange(a[firstNotGreater], a[firstUnknown]);
                 firstNotGreater++;
             }
@@ -127,12 +88,10 @@ void divide(double a[], int n, double divider,
 // Rearrange the elements of the array so that
 // a[0] >= a[1] >= a[2] >= ... >= a[n-2] >= a[n-1]
 // If n <= 1, do nothing.
-void order(double a[], int n)
-{
-    std::cout << "|" << std::endl;
+void order(double a[], int n) {
     if (n <= 1) return;
 
-    order(a, n-1); // On first run, open up a tree of every sublist like:
+    order(a, n - 1); // On first run, open up a tree of every sublist like:
     // a b c d e f g 7
     //   b c d e f g 6
     //     c d e f g 5
@@ -141,7 +100,7 @@ void order(double a[], int n)
     //           f g 2
     //             g 1
 
-    // Starting at the end, shift the smallest element to the right
-    if (a[n - 2] < a[n-1]) exchange(a[n-1], a[n - 2]);
-    order(a, n-1);
+    // Starting at the end, shift the smallest element to the right (aka shift the largest element to the far left)
+    if (a[n - 2] < a[n - 1]) exchange(a[n - 1], a[n - 2]);
+    order(a, n - 1);
 }

@@ -1,16 +1,3 @@
-//
-// Created by jdc10 on 2/3/2021.
-//
-
-#include <iostream>
-
-
-bool somePredicate(double x) {
-    std::cout << x << "|";
-
-    return x < 0;
-}
-
 // Return true if the somePredicate function returns true for at
 // least one of the array elements, false otherwise.
 bool anyTrue(const double a[], int n) {
@@ -72,9 +59,15 @@ int positionOfMax(const double a[], int n) {
 //    10 20 20
 // a1 is sublist, a2 is superlist
 bool isIn(const double a1[], int n1, const double a2[], int n2) {
-    if (n1 < 0 || n2 < 0) return true; // Handle the negative cases
-    if (n1 == 0) return true; // If n1 is ever 0, then we know that we've gotten to the bottom of it and we can return 0
-    if (n2 == 0) // We have looked through all of n2 and found no matches in n1, so return false
+    // Handle the negative cases
+    if (n1 < 0) return true;
+    if (n2 < 0) return false;
+
+    // Handle the escape cases
+    // If n1 is ever 0, then we know that we've gotten to the bottom of it and we can return 0
+    if (n1 == 0) return true;
+    // We have looked through all of n2 and found no matches in n1, so return false
+    if (n2 == 0)
         return false;
 
     if (a1[0] == a2[0]) // Match found
