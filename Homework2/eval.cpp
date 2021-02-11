@@ -122,7 +122,6 @@ int precedence(const char &opp) {
 }
 
 
-
 /// Convert infix logical expression to postfix
 /// @param infix The infix expression to start with
 /// @param postfix The postfix expression to write to

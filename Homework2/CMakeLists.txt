@@ -3,4 +3,4 @@ project(Homework2)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(Homework2 mazestack.cpp)
+add_executable(Homework2 eval.cpp)

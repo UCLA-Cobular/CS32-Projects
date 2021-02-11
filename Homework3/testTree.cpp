@@ -9,6 +9,14 @@ using namespace std;
 
 int main() {
     {
+        double list[] = {10, 30};
+        double a2[] = {10, 30};
+        double a3[] = {10, 10, 40};
+        double a4[] = {50, 40, 30};
+
+        assert(countIsIn(a2, 2, list, 2) == 1);
+    }
+    {
         double list[] = {10, 30, 40, 20};
         double a1[] = {10, 40, 20};
         double a2[] = {10, 30, 40};
