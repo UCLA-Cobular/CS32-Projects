@@ -96,9 +96,13 @@
     <ClInclude Include="GameController.h" />
     <ClInclude Include="GameWorld.h" />
     <ClInclude Include="GraphObject.h" />
+    <ClInclude Include="Header.h" />
     <ClInclude Include="SoundFX.h" />
     <ClInclude Include="SpriteManager.h" />
     <ClInclude Include="StudentWorld.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
