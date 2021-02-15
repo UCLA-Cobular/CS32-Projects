@@ -18,15 +18,20 @@ public:
 	int     init() override;
 	int     move() override;
 	void    cleanUp() override;
-	void    updateUnitsSinceLastAddedWhiteLine();
+	void    updateDisplayText();
+	void    saveSoul() { m_souls_2_save--; }
 
 	GhostRacer* ghost_racer() const { return m_ghost_racer; }
+
 private:
+	void add_holy_water();
 	void add_new_lines();
 	void initialize_lines();
 
 	std::vector<Actor*> actorList;
 	GhostRacer*         m_ghost_racer;
+	int                 m_souls_2_save;
+	int                 m_bonus_pts;
 	double              unitsSinceLastAddedWhiteLine;
 };
 

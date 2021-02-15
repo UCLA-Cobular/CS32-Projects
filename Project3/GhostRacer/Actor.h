@@ -8,6 +8,7 @@
 class StudentWorld;
 class GhostRacer;
 
+
 class Actor : public GraphObject
 {
 protected:
@@ -38,10 +39,12 @@ class MovingActor : public Actor
 {
 public:
 	// REMEMBER: Y IS VERT, X IS HORIZ!!!!!!
-	MovingActor(int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed, StudentWorld* game_world)
+	MovingActor(
+		int           ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
+		StudentWorld* game_world)
 		: Actor(ImageID, startX, startY, dir, size, depth, game_world), m_vSpeed(m_vSpeed), m_hSpeed(m_hSpeed) { }
 
-	virtual void move();
+	virtual bool move();
 
 	int  v_speed() const;
 	void set_v_speed(const int m_v_speed) { m_vSpeed = m_v_speed; }
@@ -54,13 +57,84 @@ private:
 };
 
 
-class HealthActor : public MovingActor
+class CollidesWithPlayer : public MovingActor
+{
+public:
+	CollidesWithPlayer(
+		int           ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
+		StudentWorld* game_world)
+		: MovingActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world) {}
+
+	bool collidedWithPlayer() const;
+};
+
+
+class Goodie : public CollidesWithPlayer
+{
+public:
+	Goodie(int ImageID, double startX, double startY, int size, StudentWorld* game_world, int depth = 2)
+		: CollidesWithPlayer(ImageID, startX, startY, 0, size, depth, -4, 0, game_world) {}
+
+	void         doSomething() override;
+	virtual void doSomethingSpecific() = 0;
+	virtual void handlePlayerCollision() = 0;
+};
+
+
+class HealingGoodie : public Goodie
+{
+public:
+	HealingGoodie(double startX, double startY, StudentWorld* game_world)
+		: Goodie(IID_HEAL_GOODIE, startX, startY, 1, game_world) {}
+
+	bool interactWithProjectiles() const override { return true; }
+	void doSomethingSpecific() override;
+	void handlePlayerCollision() override;
+};
+
+
+class HolyWaterGoodie : public Goodie
+{
+public:
+	HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)
+		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world) {}
+
+	bool interactWithProjectiles() const override { return true; }
+	void doSomethingSpecific() override;
+	void handlePlayerCollision() override;
+};
+
+
+class SoulGoodie : public Goodie
+{
+public:
+	SoulGoodie(double startX, double startY, StudentWorld* game_world)
+		: Goodie(IID_SOUL_GOODIE, startX, startY, 4, game_world) {}
+
+	void doSomethingSpecific() override;
+	void handlePlayerCollision() override;
+};
+
+
+// Depth 1
+class OilSlick : public Goodie
+{
+public:
+	OilSlick(double startX, double startY, StudentWorld* game_world)
+		: Goodie(IID_SOUL_GOODIE, startX, startY, randInt(2, 5), game_world, 1) {}
+
+	void doSomethingSpecific() override;
+	void handlePlayerCollision() override;
+};
+
+
+class HealthActor : public CollidesWithPlayer
 {
 public:
 	HealthActor(
 		int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
 		int StartingHealth, StudentWorld* game_world)
-		: MovingActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world)
+		: CollidesWithPlayer(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world)
 	{
 		this->m_health = StartingHealth;
 	}
@@ -74,18 +148,28 @@ private:
 };
 
 
-class GhostRacer : public HealthActor
+// Note: this class re-implements some of the features of HealthAgent.
+// This is because I could not find a way to make this work without multiple inheritance and then the diamond problem and such.
+// I have spent **hours** trying to get virtual inheritance and stuff working, it came down to requiring a default and lazy initialized constructor on GraphObject, which I can't add
+// The compromise is a slightly different health system here on this class, and most other things with health will share their code. Good enough for me. 
+class GhostRacer : public Actor
 {
 public:
-	GhostRacer(StudentWorld* game_world) : HealthActor(IID_GHOST_RACER, 128, 32, 90, 4, 0, 0, 0, 100, game_world), m_holy_water(10), m_racer_speed(0) {}
+	GhostRacer(StudentWorld* game_world)
+		: Actor(IID_GHOST_RACER, 128, 32, 90, 4, 0, game_world), m_holy_water(10), m_racer_speed(0), m_health(100) {}
+
 	void doSomething() override;
-	void move() override;
+	void move();
 	void hurtGhostRacer(int damage);
 	void spinOut();
 	void getHealed(int heal_amount);
 	void addHolyWater(int amount);
 	void fireHolyWater();
+	void change_health(int health) { m_health += health; }
+	void set_health(int health) { m_health = health; }
 
+	int  get_health() const { return m_health; }
+	int  holy_water() const { return m_holy_water; }
 	int  racer_speed() const { return m_racer_speed; }
 	void set_racer_speed(const int racer_speed) { this->m_racer_speed = racer_speed; }
 
@@ -93,16 +177,19 @@ public:
 private:
 	int m_holy_water;
 	int m_racer_speed;
+	int m_health;
 };
 
 #pragma region BorderLines
 class BorderLine : public MovingActor
 {
 public:
-	BorderLine(int ImageID, double startX, StudentWorld* game_world) : MovingActor(ImageID, startX, 0, 0, 2, 1, -4, 0, game_world) { }
+	BorderLine(int ImageID, double startX, StudentWorld* game_world)
+		: MovingActor(ImageID, startX, 0, 0, 2, 1, -4, 0, game_world) { }
 
 
-	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world) : MovingActor(ImageID, startX, startY, 0, 2, 1, -4, 0, game_world) { }
+	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)
+		: MovingActor(ImageID, startX, startY, 0, 2, 1, -4, 0, game_world) { }
 
 	bool collisionAvoidanceWorthy() const override { return true; }
 	void doSomething() override;

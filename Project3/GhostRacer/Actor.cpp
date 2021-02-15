@@ -7,9 +7,65 @@
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 constexpr double m_pi = 3.1415926535;
+/// <summary>
+/// Moves the player and will return true if the object was killed for being offscreen. This is to be used to cascade back up after.
+/// </summary>
+/// <returns>True if the object is dead, false if it's still alive</returns>
+bool MovingActor::move()
+{
+	moveTo(getX() + h_speed(), getY() + v_speed());
+	if (getX() < 0 || getY() < 0 || getY() > VIEW_WIDTH || getY() > VIEW_HEIGHT) { return true; }
+	return false;
+}
 
-void MovingActor::move() { moveTo(getX() + h_speed(), getY() + v_speed()); }
-int  MovingActor::v_speed() const { return m_vSpeed - (*(*m_game_world).ghost_racer()).racer_speed(); }
+int MovingActor::v_speed() const { return m_vSpeed - (*(*m_game_world).ghost_racer()).racer_speed(); }
+
+
+#pragma region Goodies
+void Goodie::doSomething()
+{
+	// Try to move, break out if it's killed
+	if (move()) { return; }
+	doSomethingSpecific();
+	if (collidedWithPlayer())
+	{
+		set_alive(false);
+		handlePlayerCollision();
+	}
+}
+
+void HealingGoodie::doSomethingSpecific() { }
+
+void HealingGoodie::handlePlayerCollision()
+{
+	m_game_world->playSound(SOUND_GOT_GOODIE);
+	m_game_world->ghost_racer()->getHealed(10);
+	m_game_world->increaseScore(250);
+}
+
+void HolyWaterGoodie::doSomethingSpecific() {}
+void HolyWaterGoodie::handlePlayerCollision()
+{
+	m_game_world->playSound(SOUND_GOT_GOODIE);
+	m_game_world->ghost_racer()->addHolyWater(10);
+	m_game_world->increaseScore(50);
+}
+
+/// <summary>
+/// Checks if this object overlaps with the player
+/// </summary>
+/// <returns></returns>
+bool CollidesWithPlayer::collidedWithPlayer() const
+{
+	const double delta_x  = abs(m_game_world->ghost_racer()->getX() - this->getX());
+	const double delta_y  = abs(m_game_world->ghost_racer()->getY() - this->getY());
+	const double radiuses = m_game_world->ghost_racer()->getRadius() + this->getRadius();
+	if (delta_x < radiuses * 0.25 && delta_y < radiuses * 0.6) { return true; }
+	return false;
+}
+
+#pragma endregion
+
 
 #pragma region HealthActor
 void HealthActor::set_health(const int m_health)
@@ -32,14 +88,29 @@ void GhostRacer::doSomething()
 {
 	if (get_health() < 0 || !alive()) { return; }
 
-	if (false)
+	// TODO: verify this is center x not side x
+	// Off the left side
+	if (getX() < ROAD_CENTER - ROAD_WIDTH / 2.0)
 	{
-		// step 2
+		if (getDirection() > 90)
+		{
+			// TODO: Check on what set of sounds should play once the hurt sound is added in. The demo does not play hurt on wall crash FWIW. 
+			hurtGhostRacer(10);
+			setDirection(82);
+			m_game_world->playSound(SOUND_VEHICLE_CRASH);
+		}
 	}
-	else if (false)
+		// Off the right side
+	else if (getX() > ROAD_CENTER + ROAD_WIDTH / 2.0)
 	{
-		// step 3
+		if (getDirection() < 90)
+		{
+			hurtGhostRacer(10);
+			setDirection(98);
+			m_game_world->playSound(SOUND_VEHICLE_CRASH);
+		}
 	}
+		// In the middle, allow a move
 	else
 	{
 		// step 4 (skipped by 2 or 3 happening
@@ -51,13 +122,13 @@ void GhostRacer::doSomething()
 			case KEY_PRESS_SPACE: fireHolyWater();
 				break;
 			case KEY_PRESS_LEFT: if (getDirection() < 114) { setDirection(getDirection() + 8); }
-							   break;
+				break;
 			case KEY_PRESS_RIGHT: if (getDirection() > 66) { setDirection(getDirection() - 8); }
-								break;
+				break;
 			case KEY_PRESS_UP: if (racer_speed() < 5) { set_racer_speed(racer_speed() + 1); }
-							 break;
+				break;
 			case KEY_PRESS_DOWN: if (racer_speed() > -1) { set_racer_speed(racer_speed() - 1); }
-							   break;
+				break;
 			default: std::cerr << "Unexpected key input!" << std::endl;
 			}
 		}
@@ -91,7 +162,7 @@ void GhostRacer::hurtGhostRacer(int damage)
 
 void GhostRacer::spinOut()
 {
-	const int sign = randInt(0, 1) ? -1 : 1;
+	const int sign  = randInt(0, 1) ? -1 : 1;
 	const int angle = sign * randInt(5, 20);
 
 	// Make sure the angle stays within the acceptable range
@@ -117,9 +188,13 @@ void GhostRacer::addHolyWater(int amount) { m_holy_water += amount; }
 // TODO: Implement holy water firing
 void GhostRacer::fireHolyWater()
 {
-	// See page 30
-	m_game_world->playSound(SOUND_PLAYER_SPRAY);
-	m_holy_water--;
+	if (holy_water() > 0)
+	{
+		// TODO: Finish implementing fireHolyWater
+		//  See page 30
+		m_game_world->playSound(SOUND_PLAYER_SPRAY);
+		m_holy_water--;
+	}
 }
 #pragma endregion
 
@@ -127,15 +202,8 @@ void GhostRacer::fireHolyWater()
 #pragma region BorderLines
 void BorderLine::doSomething()
 {
-	// Move according to speed and stuff
-	move();
-
-	// Flag the object for deletion if it's off the screen
-	if (getX() < 0 || getY() < 0)
-	{
-		set_alive(false);
-		return;
-	}
+	// Do the delete thing, returning right away if the move fails
+	if (move()) { return; }
 }
 
 YellowBorderLine::YellowBorderLine(bool left, StudentWorld* game_world)
