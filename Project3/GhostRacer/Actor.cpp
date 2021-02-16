@@ -10,10 +10,7 @@ constexpr double m_pi = 3.1415926535;
 int Actor::flipDirection(int angle)
 {
 	angle += 180;
-	if (angle > 360)
-	{
-		return angle % 360;
-	}
+	if (angle > 360) { return angle % 360; }
 	return angle;
 }
 
@@ -29,7 +26,7 @@ bool MovingActor::move()
 	return false;
 }
 
-int MovingActor::v_speed() const { return m_vSpeed - (*(*studentWorld()).ghost_racer()).racer_speed(); }
+double MovingActor::v_speed() const { return m_vSpeed - (*(*studentWorld()).ghost_racer()).racer_speed(); }
 
 
 #pragma region Goodies
@@ -38,7 +35,7 @@ void Goodie::doSomething()
 	// Try to move, break out if it's killed
 	if (move())
 	{
-		setAlive(false);
+		set_alive(false);
 		return;
 	}
 	doSomethingSpecific();
@@ -54,14 +51,14 @@ void HealingGoodie::handlePlayerCollision()
 {
 	ghostRacer()->getHealed(10);
 	studentWorld()->increaseScore(250);
-	setAlive(false);
+	set_alive(false);
 }
 
 void HolyWaterGoodie::handlePlayerCollision()
 {
 	ghostRacer()->addHolyWater(10);
 	studentWorld()->increaseScore(50);
-	setAlive(false);
+	set_alive(false);
 }
 
 void SoulGoodie::doSomethingSpecific() { setDirection(getDirection() + 10); }
@@ -70,7 +67,7 @@ void SoulGoodie::handlePlayerCollision()
 {
 	studentWorld()->saveSoul();
 	studentWorld()->increaseScore(100);
-	setAlive(false);
+	set_alive(false);
 }
 
 void OilSlick::handlePlayerCollision() { ghostRacer()->spinOut(); }
@@ -95,13 +92,13 @@ bool CollidesWithPlayer::collidedWithPlayer() const
 void HasHealthActor::set_health(const int m_health)
 {
 	this->m_health = m_health;
-	if (m_health < 0) { setAlive(false); }
+	if (m_health < 0) { set_alive(false); }
 }
 
 void HasHealthActor::change_health(const int delta_health)
 {
 	m_health += delta_health;
-	if (m_health < 0) { setAlive(false); }
+	if (m_health < 0) { set_alive(false); }
 }
 
 #pragma endregion
@@ -119,7 +116,7 @@ void HumanPedestrian::doSomething()
 	}
 	if (move())
 	{
-		setAlive(false);
+		set_alive(false);
 		return;
 	}
 	decrement_move_plan_dist();
@@ -176,13 +173,82 @@ void ZombiePedestrian::doInteractWithProjectile(int damage)
 	change_health(-damage);
 	if (get_health() <= 0)
 	{
-		setAlive(false);
+		set_alive(false);
 		playSound(SOUND_PED_DIE);
-		if (!collidedWithPlayer())
+		if (!collidedWithPlayer()) { studentWorld()->addHealthPack(getX(), getY()); }
+	}
+}
+
+void ZombieCab::doSomething()
+{
+	if (!alive()) { return; }
+
+	// Step 2
+	// If collided with player already, skip to step 3 otherwise do this step
+	if (collidedWithPlayer() && !hasDamagedGhostRacer)
+	{
+		playSound(SOUND_VEHICLE_CRASH);
+		ghostRacer()->hurtGhostRacer(20); // TODO: ensure this is handled correctly
+		if (getX() <= ghostRacer()->getX())
 		{
-			studentWorld()->addHealthPack(getX(), getY());
+			set_h_speed(-5);
+			setDirection(120 + randInt(0, 19)); // Written as [0,20), so actually 0-19 I think
+		}
+		else
+		{
+			set_h_speed(5);
+			setDirection(60 - randInt(0, 19)); // Written as [0,20), so actually 0-19 I think
+		}
+		hasDamagedGhostRacer = true;
+	}
+	if (move()) { return; }
+
+	// Handle speed changes for other objects
+	// Cab is faster than racer
+	if (v_speed() - studentWorld()->ghost_racer()->racer_speed() > 0 && StudentWorld::coordToLane(getX()) != -1)
+	{
+		// And there is an actor in the cab's lane in front of cab and said actor is closer than 96 pixels in front
+		const double next_actor_dist = studentWorld()->collisionActorInLane(StudentWorld::coordToLane(getX()), getY(), false);
+		if (next_actor_dist > 0 && next_actor_dist < 96)
+		{
+			// Decrement speed
+			set_v_speed(v_speed() - 0.5);
 		}
 	}
+
+	// Cab is same or slower than racer
+	if (v_speed() - studentWorld()->ghost_racer()->racer_speed() < 0 && StudentWorld::coordToLane(getX()) != -1)
+	{
+		// And there is an actor in the cab's lane behind the cab and said actor is closer than 96 pixels
+		const double prev_actor_dist = studentWorld()->collisionActorInLane(StudentWorld::coordToLane(getX()), getY(), true);
+		if (prev_actor_dist > 0 && prev_actor_dist < 96)
+		{
+			// Increment speed
+			set_v_speed(v_speed() + 0.5);
+		}
+	}
+
+	decrement_move_plan_dist();
+	if (move_plan_dist() > 0)
+	{
+		return;
+	}
+	set_move_plan_dist(randInt(4, 32));
+	set_v_speed(v_speed() + randInt(-2, 2));
+}
+
+void ZombieCab::doInteractWithProjectile(int damage)
+{
+	change_health(-damage);
+	if (get_health() <= 0)
+	{
+		set_alive(false);
+		playSound(SOUND_PED_DIE);
+		studentWorld()->addHealthPack(getX(), getY());
+		studentWorld()->increaseScore(200);
+		return;
+	}
+	playSound(SOUND_PED_HURT);
 }
 
 void MovementPlanActor::createNewMovePlan()
@@ -200,6 +266,7 @@ void MovementPlanActor::createNewMovePlan()
 #pragma endregion
 
 #pragma region GhostRacer
+
 void GhostRacer::doSomething()
 {
 	if (get_health() < 0 || !alive()) { return; }
@@ -235,19 +302,26 @@ void GhostRacer::doSomething()
 		{
 			switch (key)
 			{
-			case KEY_PRESS_SPACE: fireHolyWater();
+			case KEY_PRESS_SPACE:
+				fireHolyWater();
 				break;
-			case KEY_PRESS_LEFT: if (getDirection() < 114) { setDirection(getDirection() + 8); }
+			case KEY_PRESS_LEFT:
+				if (getDirection() < 114) { setDirection(getDirection() + 8); }
 				break;
-			case KEY_PRESS_RIGHT: if (getDirection() > 66) { setDirection(getDirection() - 8); }
+			case KEY_PRESS_RIGHT:
+				if (getDirection() > 66) { setDirection(getDirection() - 8); }
 				break;
-			case KEY_PRESS_UP: if (racer_speed() < 5) { set_racer_speed(racer_speed() + 1); }
+			case KEY_PRESS_UP:
+				if (racer_speed() < 5) { set_racer_speed(racer_speed() + 1); }
 				break;
-			case KEY_PRESS_DOWN: if (racer_speed() > -1) { set_racer_speed(racer_speed() - 1); }
+			case KEY_PRESS_DOWN:
+				if (racer_speed() > -1) { set_racer_speed(racer_speed() - 1); }
 				break;
-			default: std::cerr << "Unexpected key input!" << std::endl;
+			default:
+				std::cerr << "Unexpected key input!" << std::endl;
 			}
 		}
+		std::cerr << racer_speed() << std::endl;
 	}
 
 	// Step 5
@@ -271,7 +345,7 @@ void GhostRacer::hurtGhostRacer(int damage)
 	}
 	else
 	{
-		setAlive(false);
+		set_alive(false);
 		playSound(SOUND_PLAYER_DIE);
 	}
 }
@@ -321,7 +395,7 @@ void BorderLine::doSomething()
 	// Do the delete thing, returning right away if the move fails
 	if (move())
 	{
-		setAlive(false);
+		set_alive(false);
 		return;
 	}
 }

@@ -43,9 +43,9 @@ int StudentWorld::init()
 	unitsSinceLastAddedWhiteLine = 0;
 
 	// Setup stuff for the level stats
-	m_souls_2_save      = getLevel() * 2 + 5;
-	m_bonus_pts         = 5000;
-	
+	m_souls_2_save = getLevel() * 2 + 5;
+	m_bonus_pts    = 5000;
+
 	// Create the two yellow border lines on the left and the right
 	initialize_lines();
 
@@ -57,7 +57,7 @@ int StudentWorld::init()
 	return GWSTATUS_CONTINUE_GAME;
 }
 
-int  StudentWorld::random_x_value() { return randInt(ROAD_CENTER - ROAD_WIDTH / 2.0, ROAD_CENTER + ROAD_WIDTH / 2.0); }
+int StudentWorld::random_x_value() { return randInt(ROAD_CENTER - ROAD_WIDTH / 2.0, ROAD_CENTER + ROAD_WIDTH / 2.0); }
 
 void StudentWorld::add_new_lines()
 {
@@ -107,7 +107,6 @@ int StudentWorld::move()
 			{
 				delete (*actorIterator);
 				actorIterator = actorList.erase(actorIterator);
-				cerr << actorList.size() << endl;
 			}
 		}
 	}
@@ -120,6 +119,7 @@ int StudentWorld::move()
 		add_new_lines();
 		add_holy_water();
 		add_lost_soul();
+		add_zombie_cab();
 	}
 
 	// Deal with points and stuff
@@ -158,6 +158,68 @@ void StudentWorld::add_oil_slick()
 	}
 }
 
+void StudentWorld::add_zombie_cab()
+{
+	// Cancel if the odds check fails
+	if (randInt(0, max(100 - getLevel() * 20, 10)) != 0) { return; }
+
+	// Randomly choose a lane selection order
+	int       lanes[3];
+	int       laneChoice  = -1;
+	int       startHeight = -1;
+	int       startSpeed  = -1;
+	const int choice      = randInt(0, 2);
+	switch (choice)
+	{
+	default:
+		cerr << "Something went wrong with zombie cab lane choices" << endl;
+	case 0:
+		lanes[0] = 0;
+		lanes[1] = 1;
+		lanes[2] = 2;
+		break;
+	case 1:
+		lanes[0] = 1;
+		lanes[1] = 2;
+		lanes[2] = 0;
+		break;
+	case 2:
+		lanes[0] = 2;
+		lanes[1] = 0;
+		lanes[2] = 1;
+		break;
+	}
+
+	// Choose where to put it inside the lane
+	for (int i = 0; i < 3; i++)
+	{
+		// Check the bottom of the lane first
+		const int closest_actor_to_bottom_dist = StudentWorld::collisionActorInLane(lanes[i], 0.0, false);
+		if (closest_actor_to_bottom_dist == -1 || closest_actor_to_bottom_dist > VIEW_HEIGHT / 3)
+		{
+			laneChoice  = lanes[i];
+			startHeight = SPRITE_HEIGHT / 2;
+			startSpeed  = ghost_racer()->racer_speed() + randInt(2, 4);
+			break;
+		}
+
+		// Now check the top of the lane
+		const int closest_actor_to_top_dist = StudentWorld::collisionActorInLane(lanes[i], VIEW_HEIGHT, true);
+		if (closest_actor_to_top_dist == -1 || (VIEW_HEIGHT - closest_actor_to_top_dist) < (VIEW_HEIGHT * 2 / 3))
+		{
+			laneChoice  = lanes[i];
+			startHeight = VIEW_HEIGHT - SPRITE_HEIGHT / 2;
+			startSpeed  = ghost_racer()->racer_speed() - randInt(2, 4);
+			break;
+		}
+	}
+
+	// All 3 lanes are too dangerous to add a cab, so we don't do anything
+	if (laneChoice == -1) { return; }
+
+	actorList.push_back(new ZombieCab(laneToCoord(laneChoice), startHeight, startSpeed, this));
+}
+
 
 void StudentWorld::add_holy_water()
 {
@@ -179,7 +241,7 @@ void StudentWorld::add_human_peds()
 
 void StudentWorld::add_zombie_peds()
 {
-	if (randInt(0, max(100-(getLevel() * 10), 20)) == 0)
+	if (randInt(0, max(100 - (getLevel() * 10), 20)) == 0)
 	{
 		actorList.push_back(new ZombiePedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
 	}
@@ -193,12 +255,92 @@ void StudentWorld::add_lost_soul()
 void StudentWorld::addHealthPack(double startX, double startY)
 {
 	// 1 in 5 odds to spawn
-	if (randInt(0,4) == 0)
+	if (randInt(0, 4) == 0) { actorList.push_back(new HealingGoodie(startX, startY, this)); }
+}
+
+#pragma endregion
+
+/// <summary>
+/// Returns the distance to the closest collision actor in a given lane, given the described parameters.
+/// Default configuration will tell the dist to the first collideable actor in a lane from the bottom of the screen going up.
+/// </summary>
+/// <param name="lane">The lane to check for, 0-2</param>
+/// <param name="y_coord">The y-coord to search from, defaults to bottom of screen</param>
+/// <param name="behind">Weather to search in front of or behind the given coord, defaults to no</param>
+/// <returns>The distance to the closest collision actor in a certain lane, or -1 if none are found, or -2 if data is entered in error.</returns>
+double StudentWorld::collisionActorInLane(int lane, double y_coord = 0.0, bool behind = false)
+{
+	double left_search_area;
+	double right_search_area;
+	switch (lane)
 	{
-		actorList.push_back(new HealingGoodie(startX, startY, this));
+	case 0:
+		left_search_area = ROAD_CENTER - ROAD_WIDTH / 2.0;
+		right_search_area = (ROAD_CENTER - ROAD_WIDTH / 2.0) + (ROAD_WIDTH / 3.0);
+		break;
+	case 1:
+		left_search_area = (ROAD_CENTER - ROAD_WIDTH / 2.0) + (ROAD_WIDTH / 3.0);
+		right_search_area = (ROAD_CENTER + ROAD_WIDTH / 2.0) - (ROAD_WIDTH / 3.0);
+		break;
+	case 2:
+		left_search_area = (ROAD_CENTER + ROAD_WIDTH / 2.0) - (ROAD_WIDTH / 3.0);
+		right_search_area = ROAD_CENTER + ROAD_WIDTH / 2.0;
+		break;
+	default:
+		// Error!
+		return -2;
+	}
+
+	for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
+	{
+		if ((*actorIterator)->collisionAvoidanceWorthy() && (*actorIterator)->getX() >= left_search_area && (*
+			actorIterator)->getX() < right_search_area)
+		{
+			// Collideable actor is in our lane!
+
+			// actorY - y_coord, positive when in front, negative when behind.
+			const double delta_y = (*actorIterator)->getY() - y_coord;
+			if (behind)
+			{
+				if (delta_y < 0) { return abs(delta_y); }
+				return -1;
+			}
+			else
+			{
+				if (delta_y > 0) { return abs(delta_y); }
+				return -1;
+			}
+		}
+	}
+	return -1;
+}
+
+int StudentWorld::coordToLane(double x_coord)
+{
+	// Lane 0 (far left lane)
+	if (x_coord >= ROAD_CENTER - ROAD_WIDTH / 2.0 && x_coord < (ROAD_CENTER - ROAD_WIDTH / 2.0) + (ROAD_WIDTH / 3.0))
+	{
+		return 0;
+	}
+	else if (x_coord >= (ROAD_CENTER - ROAD_WIDTH / 2.0) + (ROAD_WIDTH / 3.0) && x_coord < (ROAD_CENTER + ROAD_WIDTH /
+		2.0) - (ROAD_WIDTH / 3.0)) { return 1; }
+	else if (x_coord >= (ROAD_CENTER + ROAD_WIDTH / 2.0) - (ROAD_WIDTH / 3.0) && x_coord < ROAD_CENTER + ROAD_WIDTH /
+		2.0) { return 2; }
+	return -1;
+}
+
+double StudentWorld::laneToCoord(int lane)
+{
+	switch (lane)
+	{
+	case 0:
+		return ROAD_CENTER - ROAD_WIDTH / 3.0;
+	case 1: default:
+		return ROAD_CENTER;
+	case 2:
+		return ROAD_CENTER + ROAD_WIDTH / 3.0;
 	}
 }
-#pragma endregion
 
 void StudentWorld::updateUnitsSinceLastAddedWhiteLine()
 {

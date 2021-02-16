@@ -14,15 +14,18 @@ class StudentWorld : public GameWorld
 {
 public:
 	StudentWorld(std::string assetPath);
-	virtual ~StudentWorld();
-	int     init() override;
-	int     move() override;
-	void    cleanUp() override;
-	void    updateDisplayText();
-	void    saveSoul() { m_souls_2_save--; }
-	bool    checkShortCircuitEnd() const { return m_short_circuit_end; }
-	void    shortCircuitEndLevel() { m_short_circuit_end = true; }
-	void    addHealthPack(double startX, double startY);
+	virtual       ~StudentWorld();
+	int           init() override;
+	int           move() override;
+	void          cleanUp() override;
+	void          updateDisplayText();
+	void          saveSoul() { m_souls_2_save--; }
+	bool          checkShortCircuitEnd() const { return m_short_circuit_end; }
+	void          shortCircuitEndLevel() { m_short_circuit_end = true; }
+	void          addHealthPack(double startX, double startY);
+	double        collisionActorInLane(int lane, double y_coord, bool behind);
+	static int    coordToLane(double x_coord);
+	static double laneToCoord(int lane);
 
 	GhostRacer* ghost_racer() const { return m_ghost_racer; }
 
@@ -34,6 +37,7 @@ private:
 	void add_human_peds();
 	void add_zombie_peds();
 	void add_oil_slick();
+	void add_zombie_cab();
 	void add_lost_soul();
 	void add_new_lines();
 	void initialize_lines();

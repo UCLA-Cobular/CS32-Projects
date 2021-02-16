@@ -19,7 +19,7 @@ public:
 
 	void          moveDelta(double x, double y) { moveTo(getX() + x, getY() + y); }
 	bool          alive() const { return m_alive; }
-	void          setAlive(bool alive) { m_alive = alive; }
+	void          set_alive(bool alive) { m_alive = alive; }
 	int static    flipDirection(int angle);
 	void          playSound(int sound) const { m_game_world->playSound(sound); }
 	GhostRacer*   ghostRacer() const { return m_game_world->ghost_racer(); }
@@ -53,14 +53,14 @@ public:
 
 	virtual bool move();
 
-	int  v_speed() const;
-	void set_v_speed(const int m_v_speed) { m_vSpeed = m_v_speed; }
-	int  h_speed() const { return m_hSpeed; }
-	void set_h_speed(const int m_h_speed) { m_hSpeed = m_h_speed; }
+	double v_speed() const;
+	void   set_v_speed(const double m_v_speed) { m_vSpeed = m_v_speed; }
+	double h_speed() const { return m_hSpeed; }
+	void   set_h_speed(const double m_h_speed) { m_hSpeed = m_h_speed; }
 
 private:
-	int m_vSpeed;
-	int m_hSpeed;
+	double m_vSpeed;
+	double m_hSpeed;
 };
 
 
@@ -183,6 +183,8 @@ public:
 	void doSomething() override;
 	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
+	bool collisionAvoidanceWorthy() const override { return true; }
+
 };
 
 
@@ -195,6 +197,7 @@ public:
 	void doSomething() override;
 	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
+	bool collisionAvoidanceWorthy() const override { return true; }
 
 private:
 	int m_time_until_grunt;
@@ -204,10 +207,15 @@ private:
 class ZombieCab : public MovementPlanActor
 {
 public:
-	ZombieCab(double startX, double startY, StudentWorld* game_world)
-		: MovementPlanActor(IID_ZOMBIE_CAB, startX, startY, 9, 4, 0, 0, 0, 3, 0, game_world), hasDamagedGhostRacer(false) {}
+	ZombieCab(double startX, double startY, int m_vSpeed, StudentWorld* game_world)
+		: MovementPlanActor(IID_ZOMBIE_CAB, startX, startY, 90, 4, 0, m_vSpeed, 0, 3, 0, game_world),
+		  hasDamagedGhostRacer(false) {}
+
+	void doSomething() override;
 
 	bool collisionAvoidanceWorthy() const override { return true; }
+	bool canInteractWithProjectiles() const override { return true; }
+	void doInteractWithProjectile(int damage) override;
 private:
 	bool hasDamagedGhostRacer;
 };
@@ -257,7 +265,6 @@ public:
 	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)
 		: MovingActor(ImageID, startX, startY, 0, 2, 1, -4, 0, game_world) { }
 
-	bool collisionAvoidanceWorthy() const override { return true; }
 	void doSomething() override;
 };
 
