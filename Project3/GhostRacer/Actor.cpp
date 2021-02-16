@@ -7,6 +7,17 @@
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 constexpr double m_pi = 3.1415926535;
+int Actor::flipDirection(int angle)
+{
+	angle += 180;
+	if (angle > 360)
+	{
+		return angle % 360;
+	}
+	return angle;
+}
+
+
 /// <summary>
 /// Moves the player and will return true if the object was killed for being offscreen. This is to be used to cascade back up after.
 /// </summary>
@@ -18,38 +29,51 @@ bool MovingActor::move()
 	return false;
 }
 
-int MovingActor::v_speed() const { return m_vSpeed - (*(*m_game_world).ghost_racer()).racer_speed(); }
+int MovingActor::v_speed() const { return m_vSpeed - (*(*studentWorld()).ghost_racer()).racer_speed(); }
 
 
 #pragma region Goodies
 void Goodie::doSomething()
 {
 	// Try to move, break out if it's killed
-	if (move()) { return; }
+	if (move())
+	{
+		setAlive(false);
+		return;
+	}
 	doSomethingSpecific();
 	if (collidedWithPlayer())
 	{
-		set_alive(false);
+		playSound(m_sound);
 		handlePlayerCollision();
 	}
 }
 
-void HealingGoodie::doSomethingSpecific() { }
 
 void HealingGoodie::handlePlayerCollision()
 {
-	m_game_world->playSound(SOUND_GOT_GOODIE);
-	m_game_world->ghost_racer()->getHealed(10);
-	m_game_world->increaseScore(250);
+	ghostRacer()->getHealed(10);
+	studentWorld()->increaseScore(250);
+	setAlive(false);
 }
 
-void HolyWaterGoodie::doSomethingSpecific() {}
 void HolyWaterGoodie::handlePlayerCollision()
 {
-	m_game_world->playSound(SOUND_GOT_GOODIE);
-	m_game_world->ghost_racer()->addHolyWater(10);
-	m_game_world->increaseScore(50);
+	ghostRacer()->addHolyWater(10);
+	studentWorld()->increaseScore(50);
+	setAlive(false);
 }
+
+void SoulGoodie::doSomethingSpecific() { setDirection(getDirection() + 10); }
+
+void SoulGoodie::handlePlayerCollision()
+{
+	studentWorld()->saveSoul();
+	studentWorld()->increaseScore(100);
+	setAlive(false);
+}
+
+void OilSlick::handlePlayerCollision() { ghostRacer()->spinOut(); }
 
 /// <summary>
 /// Checks if this object overlaps with the player
@@ -57,9 +81,9 @@ void HolyWaterGoodie::handlePlayerCollision()
 /// <returns></returns>
 bool CollidesWithPlayer::collidedWithPlayer() const
 {
-	const double delta_x  = abs(m_game_world->ghost_racer()->getX() - this->getX());
-	const double delta_y  = abs(m_game_world->ghost_racer()->getY() - this->getY());
-	const double radiuses = m_game_world->ghost_racer()->getRadius() + this->getRadius();
+	const double delta_x  = abs(ghostRacer()->getX() - this->getX());
+	const double delta_y  = abs(ghostRacer()->getY() - this->getY());
+	const double radiuses = ghostRacer()->getRadius() + this->getRadius();
 	if (delta_x < radiuses * 0.25 && delta_y < radiuses * 0.6) { return true; }
 	return false;
 }
@@ -68,20 +92,112 @@ bool CollidesWithPlayer::collidedWithPlayer() const
 
 
 #pragma region HealthActor
-void HealthActor::set_health(const int m_health)
+void HasHealthActor::set_health(const int m_health)
 {
 	this->m_health = m_health;
-	if (m_health < 0) { set_alive(false); }
+	if (m_health < 0) { setAlive(false); }
 }
 
-void HealthActor::change_health(const int delta_health)
+void HasHealthActor::change_health(const int delta_health)
 {
 	m_health += delta_health;
-	if (m_health < 0) { set_alive(false); }
+	if (m_health < 0) { setAlive(false); }
 }
 
 #pragma endregion
 
+
+#pragma region MovementActors
+void HumanPedestrian::doSomething()
+{
+	if (!alive()) { return; }
+	if (collidedWithPlayer())
+	{
+		// Marks the level for deletion, then exits so the next thing ran is the check for this mark
+		studentWorld()->shortCircuitEndLevel();
+		return;
+	}
+	if (move())
+	{
+		setAlive(false);
+		return;
+	}
+	decrement_move_plan_dist();
+	if (move_plan_dist() > 0) { return; }
+	createNewMovePlan();
+}
+
+void HumanPedestrian::doInteractWithProjectile(int damage)
+{
+	set_h_speed(-1 * h_speed());
+	setDirection(flipDirection(getDirection()));
+	playSound(SOUND_PED_HURT);
+}
+
+
+void ZombiePedestrian::doSomething()
+{
+	if (!alive()) { return; }
+	if (collidedWithPlayer())
+	{
+		ghostRacer()->hurtGhostRacer(5);
+		change_health(-2);
+		return;
+	}
+
+	// Within 30 X units and above the player
+	const double delta_x = ghostRacer()->getX() - getX();
+	if (abs(delta_x) < 30 && getY() > ghostRacer()->getY())
+	{
+		setDirection(270);
+		if (delta_x < 0) { set_h_speed(-1); }
+		else if (delta_x > 0) { set_h_speed(+1); }
+		else { set_h_speed(0); }
+		m_time_until_grunt--;
+		if (m_time_until_grunt <= 0)
+		{
+			playSound(SOUND_ZOMBIE_ATTACK);
+			m_time_until_grunt = 20;
+		}
+	}
+
+	if (move()) { return; }
+
+	if (move_plan_dist() > 0)
+	{
+		decrement_move_plan_dist();
+		return;
+	}
+	createNewMovePlan();
+}
+
+void ZombiePedestrian::doInteractWithProjectile(int damage)
+{
+	change_health(-damage);
+	if (get_health() <= 0)
+	{
+		setAlive(false);
+		playSound(SOUND_PED_DIE);
+		if (!collidedWithPlayer())
+		{
+			studentWorld()->addHealthPack(getX(), getY());
+		}
+	}
+}
+
+void MovementPlanActor::createNewMovePlan()
+{
+	// Generate number between -3 and +2, if number >= 0, add one to get {-3,-2,-1,1,2,3}
+	int num = randInt(-3, 2);
+	if (num >= 0) { num++; }
+	set_h_speed(num);
+
+	set_move_plan_dist(randInt(4, 32));
+	if (num < 0) { setDirection(180); }
+	else { setDirection(0); }
+}
+
+#pragma endregion
 
 #pragma region GhostRacer
 void GhostRacer::doSomething()
@@ -97,7 +213,7 @@ void GhostRacer::doSomething()
 			// TODO: Check on what set of sounds should play once the hurt sound is added in. The demo does not play hurt on wall crash FWIW. 
 			hurtGhostRacer(10);
 			setDirection(82);
-			m_game_world->playSound(SOUND_VEHICLE_CRASH);
+			playSound(SOUND_VEHICLE_CRASH);
 		}
 	}
 		// Off the right side
@@ -107,7 +223,7 @@ void GhostRacer::doSomething()
 		{
 			hurtGhostRacer(10);
 			setDirection(98);
-			m_game_world->playSound(SOUND_VEHICLE_CRASH);
+			playSound(SOUND_VEHICLE_CRASH);
 		}
 	}
 		// In the middle, allow a move
@@ -115,7 +231,7 @@ void GhostRacer::doSomething()
 	{
 		// step 4 (skipped by 2 or 3 happening
 		int key = -1;
-		if (m_game_world->getKey(key))
+		if (studentWorld()->getKey(key))
 		{
 			switch (key)
 			{
@@ -151,12 +267,12 @@ void GhostRacer::hurtGhostRacer(int damage)
 	if (get_health() > 0)
 	{
 		// TODO: Find SOUND_PLAYER_HURT to put here instead
-		m_game_world->playSound(SOUND_PLAYER_DIE);
+		playSound(SOUND_PLAYER_DIE);
 	}
 	else
 	{
-		set_alive(false);
-		m_game_world->playSound(SOUND_PLAYER_DIE);
+		setAlive(false);
+		playSound(SOUND_PLAYER_DIE);
 	}
 }
 
@@ -192,7 +308,7 @@ void GhostRacer::fireHolyWater()
 	{
 		// TODO: Finish implementing fireHolyWater
 		//  See page 30
-		m_game_world->playSound(SOUND_PLAYER_SPRAY);
+		playSound(SOUND_PLAYER_SPRAY);
 		m_holy_water--;
 	}
 }
@@ -203,7 +319,11 @@ void GhostRacer::fireHolyWater()
 void BorderLine::doSomething()
 {
 	// Do the delete thing, returning right away if the move fails
-	if (move()) { return; }
+	if (move())
+	{
+		setAlive(false);
+		return;
+	}
 }
 
 YellowBorderLine::YellowBorderLine(bool left, StudentWorld* game_world)

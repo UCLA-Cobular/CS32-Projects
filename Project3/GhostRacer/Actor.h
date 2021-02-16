@@ -17,21 +17,28 @@ protected:
 
 public:
 
-	void moveDelta(double x, double y) { moveTo(getX() + x, getY() + y); }
-	bool alive() const { return m_alive; }
-	void set_alive(bool alive) { m_alive = alive; }
+	void          moveDelta(double x, double y) { moveTo(getX() + x, getY() + y); }
+	bool          alive() const { return m_alive; }
+	void          setAlive(bool alive) { m_alive = alive; }
+	int static    flipDirection(int angle);
+	void          playSound(int sound) const { m_game_world->playSound(sound); }
+	GhostRacer*   ghostRacer() const { return m_game_world->ghost_racer(); }
+	StudentWorld* studentWorld() const { return m_game_world; }
 
+	// Property flags for different things. Set to true in a class if these are true for that class, and other functions will check these to see what to do.
 	bool virtual collisionAvoidanceWorthy() const { return false; }
 	bool virtual canBeHealed() const { return false; }
 	bool virtual hasHealth() const { return false; }
 	bool virtual canBeSpun() const { return false; }
-	bool virtual interactWithProjectiles() const { return false; }
+	bool virtual canInteractWithProjectiles() const { return false; }
+
+	// If canInteractWithProjectiles is true, then this function can be called when hit by a projectile. 
+	void virtual doInteractWithProjectile(int damage = 0) {}
 
 	void virtual doSomething() = 0;
-protected:
-	StudentWorld* m_game_world;
 private:
-	bool m_alive;
+	StudentWorld* m_game_world;
+	bool          m_alive;
 };
 
 
@@ -68,16 +75,20 @@ public:
 	bool collidedWithPlayer() const;
 };
 
-
+#pragma region Goodies
 class Goodie : public CollidesWithPlayer
 {
 public:
-	Goodie(int ImageID, double startX, double startY, int size, StudentWorld* game_world, int depth = 2)
-		: CollidesWithPlayer(ImageID, startX, startY, 0, size, depth, -4, 0, game_world) {}
+	Goodie(
+		int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE,
+		int depth                                                                                = 2)
+		: CollidesWithPlayer(ImageID, startX, startY, 0, size, depth, -4, 0, game_world), m_sound(sound) {}
 
 	void         doSomething() override;
-	virtual void doSomethingSpecific() = 0;
+	virtual void doSomethingSpecific() {}
 	virtual void handlePlayerCollision() = 0;
+private:
+	int m_sound;
 };
 
 
@@ -87,8 +98,7 @@ public:
 	HealingGoodie(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_HEAL_GOODIE, startX, startY, 1, game_world) {}
 
-	bool interactWithProjectiles() const override { return true; }
-	void doSomethingSpecific() override;
+	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
 };
 
@@ -99,8 +109,7 @@ public:
 	HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world) {}
 
-	bool interactWithProjectiles() const override { return true; }
-	void doSomethingSpecific() override;
+	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
 };
 
@@ -109,7 +118,7 @@ class SoulGoodie : public Goodie
 {
 public:
 	SoulGoodie(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_SOUL_GOODIE, startX, startY, 4, game_world) {}
+		: Goodie(IID_SOUL_GOODIE, startX, startY, 4, game_world, SOUND_GOT_SOUL) {}
 
 	void doSomethingSpecific() override;
 	void handlePlayerCollision() override;
@@ -121,23 +130,22 @@ class OilSlick : public Goodie
 {
 public:
 	OilSlick(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_SOUL_GOODIE, startX, startY, randInt(2, 5), game_world, 1) {}
+		: Goodie(IID_OIL_SLICK, startX, startY, randInt(2, 5), game_world, SOUND_OIL_SLICK, 1) {}
 
-	void doSomethingSpecific() override;
 	void handlePlayerCollision() override;
 };
 
+#pragma endregion
 
-class HealthActor : public CollidesWithPlayer
+
+class HasHealthActor : public CollidesWithPlayer
 {
 public:
-	HealthActor(
+	HasHealthActor(
 		int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
-		int StartingHealth, StudentWorld* game_world)
-		: CollidesWithPlayer(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world)
-	{
-		this->m_health = StartingHealth;
-	}
+		int starting_health, StudentWorld* game_world)
+		: CollidesWithPlayer(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world),
+		  m_health(starting_health) { }
 
 	int  get_health() const { return m_health; }
 	void set_health(const int m_health);
@@ -145,6 +153,63 @@ public:
 
 private:
 	int m_health;
+};
+
+
+class MovementPlanActor : public HasHealthActor
+{
+public:
+	MovementPlanActor(
+		int ImageID, double      startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
+		int starting_health, int move_plan_dist, StudentWorld* game_world)
+		: HasHealthActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, starting_health, game_world),
+		  m_move_plan_dist(move_plan_dist) {}
+
+	int  move_plan_dist() const { return m_move_plan_dist; }
+	void decrement_move_plan_dist() { m_move_plan_dist--; }
+	void set_move_plan_dist(int dist) { m_move_plan_dist = dist; }
+	void createNewMovePlan();
+private:
+	int m_move_plan_dist;
+};
+
+
+class HumanPedestrian : public MovementPlanActor
+{
+public:
+	HumanPedestrian(double startX, double startY, StudentWorld* game_world)
+		: MovementPlanActor(IID_HUMAN_PED, startX, startY, 0, 2, 0, -4, 0, 2, 0, game_world) {}
+
+	void doSomething() override;
+	bool canInteractWithProjectiles() const override { return true; }
+	void doInteractWithProjectile(int damage = 0) override;
+};
+
+
+class ZombiePedestrian : public MovementPlanActor
+{
+public:
+	ZombiePedestrian(double startX, double startY, StudentWorld* game_world)
+		: MovementPlanActor(IID_ZOMBIE_PED, startX, startY, 0, 3, 0, -4, 0, 2, 0, game_world), m_time_until_grunt(0) {}
+
+	void doSomething() override;
+	bool canInteractWithProjectiles() const override { return true; }
+	void doInteractWithProjectile(int damage = 0) override;
+
+private:
+	int m_time_until_grunt;
+};
+
+
+class ZombieCab : public MovementPlanActor
+{
+public:
+	ZombieCab(double startX, double startY, StudentWorld* game_world)
+		: MovementPlanActor(IID_ZOMBIE_CAB, startX, startY, 9, 4, 0, 0, 0, 3, 0, game_world), hasDamagedGhostRacer(false) {}
+
+	bool collisionAvoidanceWorthy() const override { return true; }
+private:
+	bool hasDamagedGhostRacer;
 };
 
 
@@ -173,6 +238,7 @@ public:
 	int  racer_speed() const { return m_racer_speed; }
 	void set_racer_speed(const int racer_speed) { this->m_racer_speed = racer_speed; }
 
+	bool canBeSpun() const override { return true; }
 	bool collisionAvoidanceWorthy() const override { return true; }
 private:
 	int m_holy_water;

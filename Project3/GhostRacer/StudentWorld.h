@@ -20,11 +20,21 @@ public:
 	void    cleanUp() override;
 	void    updateDisplayText();
 	void    saveSoul() { m_souls_2_save--; }
+	bool    checkShortCircuitEnd() const { return m_short_circuit_end; }
+	void    shortCircuitEndLevel() { m_short_circuit_end = true; }
+	void    addHealthPack(double startX, double startY);
 
 	GhostRacer* ghost_racer() const { return m_ghost_racer; }
 
 private:
+	static int random_x_value();
+
+	// Addition functions should be called every loop, as they have their own spawning chance logic internally.
 	void add_holy_water();
+	void add_human_peds();
+	void add_zombie_peds();
+	void add_oil_slick();
+	void add_lost_soul();
 	void add_new_lines();
 	void initialize_lines();
 
@@ -33,6 +43,8 @@ private:
 	int                 m_souls_2_save;
 	int                 m_bonus_pts;
 	double              unitsSinceLastAddedWhiteLine;
+	// Checked after every actor is processed, allows the actor to kill the level
+	bool m_short_circuit_end;
 };
 
 

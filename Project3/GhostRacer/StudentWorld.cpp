@@ -11,7 +11,7 @@ GameWorld* createStudentWorld(string assetPath) { return new StudentWorld(assetP
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-	: GameWorld(assetPath), unitsSinceLastAddedWhiteLine(0), m_ghost_racer(nullptr), m_souls_2_save(0), m_bonus_pts(5000) {}
+	: GameWorld(assetPath), unitsSinceLastAddedWhiteLine(0), m_ghost_racer(nullptr), m_souls_2_save(0), m_bonus_pts(5000), m_short_circuit_end(false) {}
 
 StudentWorld::~StudentWorld() { StudentWorld::cleanUp(); }
 
@@ -39,8 +39,13 @@ int StudentWorld::init()
 	// Clear out the current stuff
 	m_ghost_racer      = nullptr;
 	actorList.clear();
+	m_short_circuit_end = false;
 	unitsSinceLastAddedWhiteLine = 0;
 
+	// Setup stuff for the level stats
+	m_souls_2_save      = getLevel() * 2 + 5;
+	m_bonus_pts         = 5000;
+	
 	// Create the two yellow border lines on the left and the right
 	initialize_lines();
 
@@ -49,21 +54,10 @@ int StudentWorld::init()
 	actorList.push_back(ghost_racer);
 	m_ghost_racer = ghost_racer;
 
-	// Setup stuff for the level stats
-	m_souls_2_save = getLevel() * 2 + 5;
-	m_bonus_pts    = 5000;
-
 	return GWSTATUS_CONTINUE_GAME;
 }
 
-void StudentWorld::add_holy_water()
-{
-	const int ChanceOfHolyWater = 100 + 10 * getLevel();
-	if (randInt(0, ChanceOfHolyWater) == 0)
-	{
-		actorList.push_back(new HolyWaterGoodie(randInt(ROAD_CENTER - ROAD_WIDTH / 2.0, ROAD_CENTER + ROAD_WIDTH / 2.0), VIEW_HEIGHT, this));
-	}
-}
+int  StudentWorld::random_x_value() { return randInt(ROAD_CENTER - ROAD_WIDTH / 2.0, ROAD_CENTER + ROAD_WIDTH / 2.0); }
 
 void StudentWorld::add_new_lines()
 {
@@ -86,23 +80,22 @@ void StudentWorld::add_new_lines()
 
 int StudentWorld::move()
 {
-	// Add new actors
-	// Loop over every actor, and doSomething
-	// Remove dead actors
-
-
 	// Do the doSomethings
 	{
 		for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
 		{
 			(*actorIterator)->doSomething();
+			if (checkShortCircuitEnd())
+			{
+				decLives();
+				return GWSTATUS_PLAYER_DIED;
+			}
 		}
 	}
 	updateUnitsSinceLastAddedWhiteLine();
 
 	// Remove dead actors
 	{
-		// TODO: What happens when the player dies?
 		for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
 		{
 			if (!ghost_racer()->alive())
@@ -114,23 +107,32 @@ int StudentWorld::move()
 			{
 				delete (*actorIterator);
 				actorIterator = actorList.erase(actorIterator);
+				cerr << actorList.size() << endl;
 			}
 		}
 	}
 
 	// Add new actors
 	{
+		add_zombie_peds();
+		add_human_peds();
+		add_oil_slick();
 		add_new_lines();
 		add_holy_water();
+		add_lost_soul();
 	}
 
 	// Deal with points and stuff
-	m_bonus_pts--;
-	updateDisplayText();
+	{
+		m_bonus_pts--;
+		updateDisplayText();
+	}
 
 
 	// check for level completion
-	if (m_souls_2_save <= 0) { return GWSTATUS_FINISHED_LEVEL; }
+	{
+		if (m_souls_2_save <= 0) { return GWSTATUS_FINISHED_LEVEL; }
+	}
 
 	return GWSTATUS_CONTINUE_GAME;
 }
@@ -145,6 +147,58 @@ void StudentWorld::cleanUp()
 		delete *actorIterator;
 	}
 }
+
+
+#pragma region AddNewActorHelpers
+void StudentWorld::add_oil_slick()
+{
+	if (randInt(0, max(150 - (getLevel() * 10), 40)) == 0)
+	{
+		actorList.push_back(new OilSlick(random_x_value(), VIEW_HEIGHT, this));
+	}
+}
+
+
+void StudentWorld::add_holy_water()
+{
+	const int ChanceOfHolyWater = 100 + 10 * getLevel();
+	if (randInt(0, ChanceOfHolyWater) == 0)
+	{
+		actorList.push_back(new HolyWaterGoodie(random_x_value(), VIEW_HEIGHT, this));
+	}
+}
+
+void StudentWorld::add_human_peds()
+{
+	const int chance_of_human_ped = max(200 - getLevel() * 10, 30);
+	if (randInt(0, chance_of_human_ped) == 0)
+	{
+		actorList.push_back(new HumanPedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
+	}
+}
+
+void StudentWorld::add_zombie_peds()
+{
+	if (randInt(0, max(100-(getLevel() * 10), 20)) == 0)
+	{
+		actorList.push_back(new ZombiePedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
+	}
+}
+
+void StudentWorld::add_lost_soul()
+{
+	if (randInt(0, 100) == 0) { actorList.push_back(new SoulGoodie(random_x_value(), VIEW_HEIGHT, this)); }
+}
+
+void StudentWorld::addHealthPack(double startX, double startY)
+{
+	// 1 in 5 odds to spawn
+	if (randInt(0,4) == 0)
+	{
+		actorList.push_back(new HealingGoodie(startX, startY, this));
+	}
+}
+#pragma endregion
 
 void StudentWorld::updateUnitsSinceLastAddedWhiteLine()
 {
