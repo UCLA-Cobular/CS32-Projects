@@ -1,6 +1,3 @@
-#define _USE_MATH_DEFINES
-
-
 #include "Actor.h"
 #include "StudentWorld.h"
 #include "GameConstants.h"
@@ -9,6 +6,7 @@
 
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
+constexpr double m_pi = 3.1415926535;
 
 void MovingActor::move() { moveTo(getX() + h_speed(), getY() + v_speed()); }
 int  MovingActor::v_speed() const { return m_vSpeed - (*(*m_game_world).ghost_racer()).racer_speed(); }
@@ -72,7 +70,7 @@ void GhostRacer::doSomething()
 void GhostRacer::move()
 {
 	const double direction = getDirection();
-	const double delta_x = cos(direction * M_PI / 180) * 4.0;
+	const double delta_x = cos(direction * m_pi / 180) * 4.0;
 	moveDelta(delta_x, 0.0);
 }
 
