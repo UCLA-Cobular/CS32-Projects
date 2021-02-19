@@ -9,7 +9,7 @@ GameWorld* createStudentWorld(string assetPath) { return new StudentWorld(assetP
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-	: GameWorld(assetPath), lastAddedWhiteLine(nullptr), m_ghost_racer(nullptr) {}
+	: GameWorld(assetPath), m_ghost_racer(nullptr), unitsSinceLastAddedWhiteLine(0) {}
 
 StudentWorld::~StudentWorld() { cleanUp(); }
 
@@ -28,12 +28,17 @@ void StudentWorld::initialize_lines()
 		actorList.push_back(new WhiteBorderLine(false, i * 4.0 * static_cast<double>(SPRITE_HEIGHT), this));
 		auto* const white_border_line = new WhiteBorderLine(true, i * 4.0 * static_cast<double>(SPRITE_HEIGHT), this);
 		actorList.push_back(white_border_line);
-		lastAddedWhiteLine = white_border_line;
+		unitsSinceLastAddedWhiteLine = (static_cast<double>(VIEW_HEIGHT) - SPRITE_HEIGHT) - white_border_line->getY();
 	}
 }
 
 int StudentWorld::init()
 {
+	// Clean things up from last game, if needed.
+	m_ghost_racer                = nullptr;
+	unitsSinceLastAddedWhiteLine = 0;
+	actorList.clear();
+
 	// Create the two yellow border lines on the left and the right
 	initialize_lines();
 
@@ -47,21 +52,21 @@ int StudentWorld::init()
 
 void StudentWorld::add_new_lines()
 {
-	const int    newBorderY = VIEW_HEIGHT - SPRITE_HEIGHT;
-	const double deltaY     = newBorderY - lastAddedWhiteLine->getY();
+	const int newBorderY = VIEW_HEIGHT - SPRITE_HEIGHT;
 
-	if (deltaY >= SPRITE_HEIGHT)
+	if (unitsSinceLastAddedWhiteLine >= SPRITE_HEIGHT)
 	{
 		actorList.push_back(new YellowBorderLine(false, newBorderY, this));
 		actorList.push_back(new YellowBorderLine(true, newBorderY, this));
 	}
-	if (deltaY >= 4.0 * SPRITE_HEIGHT)
+	if (unitsSinceLastAddedWhiteLine >= 4.0 * SPRITE_HEIGHT)
 	{
 		actorList.push_back(new WhiteBorderLine(false, newBorderY, this));
-		auto* const border_line = new WhiteBorderLine(true, newBorderY, this);
-		actorList.push_back(border_line);
-		lastAddedWhiteLine = border_line;
+		actorList.push_back(new WhiteBorderLine(true, newBorderY, this));
+		unitsSinceLastAddedWhiteLine = 0;
 	}
+
+	// Compute the change in unitsSinceLastAddedWhiteLine in `updateUnitsSinceLastAddedWhiteLine`, called after the doSomethings
 }
 
 int StudentWorld::move()
@@ -83,6 +88,7 @@ int StudentWorld::move()
 			(*actorIterator)->doSomething();
 		}
 	}
+	updateUnitsSinceLastAddedWhiteLine();
 
 	// Remove dead actors
 	{
@@ -108,4 +114,10 @@ void StudentWorld::cleanUp()
 	{
 		delete*actorIterator;
 	}
+}
+
+void StudentWorld::updateUnitsSinceLastAddedWhiteLine()
+{
+	// -4 is the base speed of the lines
+	unitsSinceLastAddedWhiteLine += abs(-4 - ghost_racer()->racer_speed());
 }
