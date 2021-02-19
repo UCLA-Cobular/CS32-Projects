@@ -31,6 +31,7 @@ public:
 
 private:
 	static int random_x_value();
+	void       updateUnitsSinceLastAddedWhiteLine();
 
 	// Addition functions should be called every loop, as they have their own spawning chance logic internally.
 	void add_holy_water();

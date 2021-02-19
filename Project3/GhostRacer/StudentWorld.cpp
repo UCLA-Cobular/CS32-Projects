@@ -11,7 +11,8 @@ GameWorld* createStudentWorld(string assetPath) { return new StudentWorld(assetP
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-	: GameWorld(assetPath), unitsSinceLastAddedWhiteLine(0), m_ghost_racer(nullptr), m_souls_2_save(0), m_bonus_pts(5000), m_short_circuit_end(false) {}
+	: GameWorld(assetPath), m_ghost_racer(nullptr), unitsSinceLastAddedWhiteLine(0), m_souls_2_save(0),
+	  m_bonus_pts(5000), m_short_circuit_end(false) {}
 
 StudentWorld::~StudentWorld() { StudentWorld::cleanUp(); }
 
@@ -37,9 +38,9 @@ void StudentWorld::initialize_lines()
 int StudentWorld::init()
 {
 	// Clear out the current stuff
-	m_ghost_racer      = nullptr;
+	m_ghost_racer = nullptr;
 	actorList.clear();
-	m_short_circuit_end = false;
+	m_short_circuit_end          = false;
 	unitsSinceLastAddedWhiteLine = 0;
 
 	// Setup stuff for the level stats
