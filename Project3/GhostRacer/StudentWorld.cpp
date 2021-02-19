@@ -259,6 +259,12 @@ void StudentWorld::addHealthPack(double startX, double startY)
 	if (randInt(0, 4) == 0) { actorList.push_back(new HealingGoodie(startX, startY, this)); }
 }
 
+void StudentWorld::add_oil_slick(double startX, double startY)
+{
+	// 1 in 5 odds to spawn
+	if (randInt(0, 4) == 0) { actorList.push_back(new OilSlick(startX, startY, this)); }
+}
+
 #pragma endregion
 
 /// <summary>
@@ -341,6 +347,7 @@ double StudentWorld::laneToCoord(int lane)
 	case 2:
 		return ROAD_CENTER + ROAD_WIDTH / 3.0;
 	}
+	
 }
 
 void StudentWorld::updateUnitsSinceLastAddedWhiteLine()

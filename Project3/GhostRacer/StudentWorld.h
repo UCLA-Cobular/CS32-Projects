@@ -23,6 +23,7 @@ public:
 	bool          checkShortCircuitEnd() const { return m_short_circuit_end; }
 	void          shortCircuitEndLevel() { m_short_circuit_end = true; }
 	void          addHealthPack(double startX, double startY);
+	void          add_oil_slick(double startX, double startY);
 	double        collisionActorInLane(int lane, double y_coord, bool behind);
 	static int    coordToLane(double x_coord);
 	static double laneToCoord(int lane);

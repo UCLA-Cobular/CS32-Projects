@@ -138,7 +138,7 @@ void ZombiePedestrian::doSomething()
 	if (collidedWithPlayer())
 	{
 		ghostRacer()->hurtGhostRacer(5);
-		change_health(-2);
+		doInteractWithProjectile(2);
 		return;
 	}
 
@@ -176,6 +176,10 @@ void ZombiePedestrian::doInteractWithProjectile(int damage)
 		set_alive(false);
 		playSound(SOUND_PED_DIE);
 		if (!collidedWithPlayer()) { studentWorld()->addHealthPack(getX(), getY()); }
+		studentWorld()->increaseScore(150);
+	} else
+	{
+		playSound(SOUND_PED_HURT);
 	}
 }
 
@@ -243,7 +247,7 @@ void ZombieCab::doInteractWithProjectile(int damage)
 	if (get_health() <= 0)
 	{
 		set_alive(false);
-		playSound(SOUND_PED_DIE);
+		playSound(SOUND_VEHICLE_DIE);
 		studentWorld()->addHealthPack(getX(), getY());
 		studentWorld()->increaseScore(200);
 		return;
@@ -271,13 +275,11 @@ void GhostRacer::doSomething()
 {
 	if (get_health() < 0 || !alive()) { return; }
 
-	// TODO: verify this is center x not side x
 	// Off the left side
 	if (getX() < ROAD_CENTER - ROAD_WIDTH / 2.0)
 	{
 		if (getDirection() > 90)
 		{
-			// TODO: Check on what set of sounds should play once the hurt sound is added in. The demo does not play hurt on wall crash FWIW. 
 			hurtGhostRacer(10);
 			setDirection(82);
 			playSound(SOUND_VEHICLE_CRASH);
@@ -338,12 +340,7 @@ void GhostRacer::move()
 void GhostRacer::hurtGhostRacer(int damage)
 {
 	change_health(-damage);
-	if (get_health() > 0)
-	{
-		// TODO: Find SOUND_PLAYER_HURT to put here instead
-		playSound(SOUND_PLAYER_DIE);
-	}
-	else
+	if (get_health() <= 0)
 	{
 		set_alive(false);
 		playSound(SOUND_PLAYER_DIE);

@@ -81,8 +81,8 @@ class Goodie : public CollidesWithPlayer
 public:
 	Goodie(
 		int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE,
-		int depth                                                                                = 2)
-		: CollidesWithPlayer(ImageID, startX, startY, 0, size, depth, -4, 0, game_world), m_sound(sound) {}
+		int direction                                                                            = 0)
+		: CollidesWithPlayer(ImageID, startX, startY, direction, size, 2, -4, 0, game_world), m_sound(sound) {}
 
 	void         doSomething() override;
 	virtual void doSomethingSpecific() {}
@@ -107,7 +107,7 @@ class HolyWaterGoodie : public Goodie
 {
 public:
 	HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world) {}
+		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world, SOUND_GOT_GOODIE, 90) {}
 
 	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
@@ -130,7 +130,7 @@ class OilSlick : public Goodie
 {
 public:
 	OilSlick(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_OIL_SLICK, startX, startY, randInt(2, 5), game_world, SOUND_OIL_SLICK, 1) {}
+		: Goodie(IID_OIL_SLICK, startX, startY, randInt(2, 5), game_world, SOUND_OIL_SLICK) {}
 
 	void handlePlayerCollision() override;
 };
@@ -184,7 +184,6 @@ public:
 	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
 	bool collisionAvoidanceWorthy() const override { return true; }
-
 };
 
 
@@ -259,11 +258,11 @@ class BorderLine : public MovingActor
 {
 public:
 	BorderLine(int ImageID, double startX, StudentWorld* game_world)
-		: MovingActor(ImageID, startX, 0, 0, 2, 1, -4, 0, game_world) { }
+		: MovingActor(ImageID, startX, 0, 0, 2, 2, -4, 0, game_world) { }
 
 
 	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)
-		: MovingActor(ImageID, startX, startY, 0, 2, 1, -4, 0, game_world) { }
+		: MovingActor(ImageID, startX, startY, 0, 2, 2, -4, 0, game_world) { }
 
 	void doSomething() override;
 };
