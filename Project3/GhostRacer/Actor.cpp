@@ -7,6 +7,7 @@
 // Students:  Add code to this file, Actor.h, StudentWorld.h, and StudentWorld.cpp
 
 constexpr double m_pi = 3.1415926535;
+
 int Actor::flipDirection(int angle)
 {
 	angle += 180;
@@ -177,10 +178,8 @@ void ZombiePedestrian::doInteractWithProjectile(int damage)
 		playSound(SOUND_PED_DIE);
 		if (!collidedWithPlayer()) { studentWorld()->addHealthPack(getX(), getY()); }
 		studentWorld()->increaseScore(150);
-	} else
-	{
-		playSound(SOUND_PED_HURT);
 	}
+	else { playSound(SOUND_PED_HURT); }
 }
 
 void ZombieCab::doSomething()
@@ -212,7 +211,8 @@ void ZombieCab::doSomething()
 	if (v_speed() - studentWorld()->ghost_racer()->racer_speed() > 0 && StudentWorld::coordToLane(getX()) != -1)
 	{
 		// And there is an actor in the cab's lane in front of cab and said actor is closer than 96 pixels in front
-		const double next_actor_dist = studentWorld()->collisionActorInLane(StudentWorld::coordToLane(getX()), getY(), false);
+		const double next_actor_dist = studentWorld()->collisionActorInLane(
+			StudentWorld::coordToLane(getX()), getY(), false);
 		if (next_actor_dist > 0 && next_actor_dist < 96)
 		{
 			// Decrement speed
@@ -224,7 +224,8 @@ void ZombieCab::doSomething()
 	if (v_speed() - studentWorld()->ghost_racer()->racer_speed() < 0 && StudentWorld::coordToLane(getX()) != -1)
 	{
 		// And there is an actor in the cab's lane behind the cab and said actor is closer than 96 pixels
-		const double prev_actor_dist = studentWorld()->collisionActorInLane(StudentWorld::coordToLane(getX()), getY(), true);
+		const double prev_actor_dist = studentWorld()->collisionActorInLane(
+			StudentWorld::coordToLane(getX()), getY(), true);
 		if (prev_actor_dist > 0 && prev_actor_dist < 96)
 		{
 			// Increment speed
@@ -233,10 +234,7 @@ void ZombieCab::doSomething()
 	}
 
 	decrement_move_plan_dist();
-	if (move_plan_dist() > 0)
-	{
-		return;
-	}
+	if (move_plan_dist() > 0) { return; }
 	set_move_plan_dist(randInt(4, 32));
 	set_v_speed(v_speed() + randInt(-2, 2));
 }
@@ -333,7 +331,7 @@ void GhostRacer::doSomething()
 void GhostRacer::move()
 {
 	const double direction = getDirection();
-	const double delta_x = cos(direction * m_pi / 180) * 4.0;
+	const double delta_x   = cos(direction * m_pi / 180) * 4.0;
 	moveDelta(delta_x, 0.0);
 }
 
@@ -397,9 +395,6 @@ void BorderLine::doSomething()
 	}
 }
 
-YellowBorderLine::YellowBorderLine(bool left, StudentWorld* game_world)
-	: BorderLine(IID_YELLOW_BORDER_LINE, start_x(left), game_world) {}
-
 YellowBorderLine::YellowBorderLine(bool left, double startY, StudentWorld* game_world)
 	: BorderLine(IID_YELLOW_BORDER_LINE, start_x(left), startY, game_world) {}
 
@@ -408,9 +403,6 @@ double YellowBorderLine::start_x(bool left)
 	if (left) { return ROAD_CENTER - ROAD_WIDTH / 2.0; }
 	return ROAD_CENTER + ROAD_WIDTH / 2.0;
 }
-
-WhiteBorderLine::WhiteBorderLine(bool left, StudentWorld* game_world)
-	: BorderLine(IID_WHITE_BORDER_LINE, start_x(left), game_world) {}
 
 WhiteBorderLine::WhiteBorderLine(bool left, double startY, StudentWorld* game_world)
 	: BorderLine(IID_WHITE_BORDER_LINE, start_x(left), startY, game_world) {}

@@ -1,3 +1,6 @@
+// ReSharper disable CppClangTidyModernizeUseEqualsDefault
+// ReSharper disable CppClangTidyHighlighting
+// ReSharper disable CppClangTidyClangDiagnosticInconsistentMissingDestructorOverride
 #ifndef ACTOR_H_
 #define ACTOR_H_
 
@@ -11,11 +14,11 @@ class GhostRacer;
 
 class Actor : public GraphObject
 {
-protected:
+public:
 	Actor(int ImageID, double startX, double startY, int dir, int size, int depth, StudentWorld* game_world)
 		: GraphObject(ImageID, startX, startY, dir, size, depth), m_game_world(game_world), m_alive(true) { }
 
-public:
+	virtual ~Actor() { }
 
 	void          moveDelta(double x, double y) { moveTo(getX() + x, getY() + y); }
 	bool          alive() const { return m_alive; }
@@ -51,6 +54,8 @@ public:
 		StudentWorld* game_world)
 		: Actor(ImageID, startX, startY, dir, size, depth, game_world), m_vSpeed(m_vSpeed), m_hSpeed(m_hSpeed) { }
 
+	virtual ~MovingActor() { }
+
 	virtual bool move();
 
 	double v_speed() const;
@@ -72,6 +77,9 @@ public:
 		StudentWorld* game_world)
 		: MovingActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world) {}
 
+	virtual ~CollidesWithPlayer() { }
+
+
 	bool collidedWithPlayer() const;
 };
 
@@ -83,6 +91,8 @@ public:
 		int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE,
 		int direction                                                                            = 0)
 		: CollidesWithPlayer(ImageID, startX, startY, direction, size, 2, -4, 0, game_world), m_sound(sound) {}
+
+	virtual ~Goodie() { }
 
 	void         doSomething() override;
 	virtual void doSomethingSpecific() {}
@@ -98,6 +108,8 @@ public:
 	HealingGoodie(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_HEAL_GOODIE, startX, startY, 1, game_world) {}
 
+	virtual ~HealingGoodie() { }
+
 	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
 };
@@ -108,6 +120,8 @@ class HolyWaterGoodie : public Goodie
 public:
 	HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world, SOUND_GOT_GOODIE, 90) {}
+
+	virtual ~HolyWaterGoodie() { }
 
 	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
@@ -120,6 +134,8 @@ public:
 	SoulGoodie(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_SOUL_GOODIE, startX, startY, 4, game_world, SOUND_GOT_SOUL) {}
 
+	virtual ~SoulGoodie() { }
+
 	void doSomethingSpecific() override;
 	void handlePlayerCollision() override;
 };
@@ -131,6 +147,8 @@ class OilSlick : public Goodie
 public:
 	OilSlick(double startX, double startY, StudentWorld* game_world)
 		: Goodie(IID_OIL_SLICK, startX, startY, randInt(2, 5), game_world, SOUND_OIL_SLICK) {}
+
+	virtual ~OilSlick() { }
 
 	void handlePlayerCollision() override;
 };
@@ -146,6 +164,8 @@ public:
 		int starting_health, StudentWorld* game_world)
 		: CollidesWithPlayer(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, game_world),
 		  m_health(starting_health) { }
+
+	virtual ~HasHealthActor() { }
 
 	int  get_health() const { return m_health; }
 	void set_health(const int m_health);
@@ -165,6 +185,8 @@ public:
 		: HasHealthActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, starting_health, game_world),
 		  m_move_plan_dist(move_plan_dist) {}
 
+	virtual ~MovementPlanActor() { }
+
 	int  move_plan_dist() const { return m_move_plan_dist; }
 	void decrement_move_plan_dist() { m_move_plan_dist--; }
 	void set_move_plan_dist(int dist) { m_move_plan_dist = dist; }
@@ -180,6 +202,8 @@ public:
 	HumanPedestrian(double startX, double startY, StudentWorld* game_world)
 		: MovementPlanActor(IID_HUMAN_PED, startX, startY, 0, 2, 0, -4, 0, 2, 0, game_world) {}
 
+	virtual ~HumanPedestrian() { }
+
 	void doSomething() override;
 	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
@@ -192,6 +216,8 @@ class ZombiePedestrian : public MovementPlanActor
 public:
 	ZombiePedestrian(double startX, double startY, StudentWorld* game_world)
 		: MovementPlanActor(IID_ZOMBIE_PED, startX, startY, 0, 3, 0, -4, 0, 2, 0, game_world), m_time_until_grunt(0) {}
+
+	virtual ~ZombiePedestrian() { }
 
 	void doSomething() override;
 	bool canInteractWithProjectiles() const override { return true; }
@@ -209,6 +235,8 @@ public:
 	ZombieCab(double startX, double startY, int m_vSpeed, StudentWorld* game_world)
 		: MovementPlanActor(IID_ZOMBIE_CAB, startX, startY, 90, 4, 0, m_vSpeed, 0, 3, 0, game_world),
 		  hasDamagedGhostRacer(false) {}
+
+	virtual ~ZombieCab() { }
 
 	void doSomething() override;
 
@@ -229,6 +257,8 @@ class GhostRacer : public Actor
 public:
 	GhostRacer(StudentWorld* game_world)
 		: Actor(IID_GHOST_RACER, 128, 32, 90, 4, 0, game_world), m_holy_water(10), m_racer_speed(0), m_health(100) {}
+
+	virtual ~GhostRacer() { }
 
 	void doSomething() override;
 	void move();
@@ -257,9 +287,7 @@ private:
 class BorderLine : public MovingActor
 {
 public:
-	BorderLine(int ImageID, double startX, StudentWorld* game_world)
-		: MovingActor(ImageID, startX, 0, 0, 2, 2, -4, 0, game_world) { }
-
+	virtual ~BorderLine() { }
 
 	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)
 		: MovingActor(ImageID, startX, startY, 0, 2, 2, -4, 0, game_world) { }
@@ -271,7 +299,8 @@ public:
 class YellowBorderLine : public BorderLine
 {
 public:
-	YellowBorderLine(bool left, StudentWorld* game_world);
+	virtual ~YellowBorderLine() { }
+
 	YellowBorderLine(bool left, double startY, StudentWorld* game_world);
 private:
 	static double start_x(bool left);
@@ -281,7 +310,8 @@ private:
 class WhiteBorderLine : public BorderLine
 {
 public:
-	WhiteBorderLine(bool left, StudentWorld* game_world);
+	virtual ~WhiteBorderLine() { }
+
 	WhiteBorderLine(bool left, double startY, StudentWorld* game_world);
 
 private:
