@@ -24,7 +24,7 @@ int countLessers(const Node *p) {
     // Sum up countLessers of the children nodes of this node and check if this node itself is a lesser at the same time
     int numLesserNodes = 0;
     bool isLesser = false;
-    for (const auto &childNode : p->child) {
+    for (const Node *childNode : p->child) {
         if (childNode != nullptr) {
             numLesserNodes += countLessers(childNode);
             if (p->data < childNode->data) isLesser = true;
