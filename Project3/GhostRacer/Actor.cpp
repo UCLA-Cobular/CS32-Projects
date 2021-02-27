@@ -23,7 +23,7 @@ int Actor::flipDirection(int angle)
 bool MovingActor::move()
 {
 	moveTo(getX() + h_speed(), getY() + v_speed());
-	if (getX() < 0 || getY() < 0 || getY() > VIEW_WIDTH || getY() > VIEW_HEIGHT) { return true; }
+	if (getX() < 0 || getY() < 0 || getX() > VIEW_WIDTH || getY() > VIEW_HEIGHT) { return true; }
 	return false;
 }
 
@@ -159,7 +159,11 @@ void ZombiePedestrian::doSomething()
 		}
 	}
 
-	if (move()) { return; }
+	if (move())
+	{
+		set_alive(false);
+		return;
+	}
 
 	if (move_plan_dist() > 0)
 	{
@@ -204,7 +208,11 @@ void ZombieCab::doSomething()
 		}
 		hasDamagedGhostRacer = true;
 	}
-	if (move()) { return; }
+	if (move())
+	{
+		set_alive(false);
+		return;
+	}
 
 	// Handle speed changes for other objects
 	// Cab is faster than racer
@@ -321,7 +329,6 @@ void GhostRacer::doSomething()
 				std::cerr << "Unexpected key input!" << std::endl;
 			}
 		}
-		std::cerr << racer_speed() << std::endl;
 	}
 
 	// Step 5
