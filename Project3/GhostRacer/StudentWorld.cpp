@@ -11,8 +11,8 @@ GameWorld* createStudentWorld(string assetPath) { return new StudentWorld(assetP
 // Students:  Add code to this file, StudentWorld.h, Actor.h, and Actor.cpp
 
 StudentWorld::StudentWorld(string assetPath)
-	: GameWorld(assetPath), m_ghost_racer(nullptr), unitsSinceLastAddedWhiteLine(0), m_souls_2_save(0),
-	  m_bonus_pts(5000), m_short_circuit_end(false) {}
+	: GameWorld(assetPath), m_ghost_racer(nullptr), m_souls_2_save(0), m_bonus_pts(5000),
+	  unitsSinceLastAddedWhiteLine(0), m_short_circuit_end(false) {}
 
 StudentWorld::~StudentWorld() { StudentWorld::cleanUp(); }
 
@@ -21,16 +21,16 @@ void StudentWorld::initialize_lines()
 	for (int i = 0; i < VIEW_HEIGHT / SPRITE_HEIGHT; i++)
 	{
 		// Static cast seems to be required to fix a possible issue with overflow when int multiplication is cast to double
-		actorList.push_back(new YellowBorderLine(false, i * static_cast<double>(SPRITE_HEIGHT), this));
-		actorList.push_back(new YellowBorderLine(true, i * static_cast<double>(SPRITE_HEIGHT), this));
+		actorVector.push_back(new YellowBorderLine(false, i * static_cast<double>(SPRITE_HEIGHT), this));
+		actorVector.push_back(new YellowBorderLine(true, i * static_cast<double>(SPRITE_HEIGHT), this));
 	}
 
 	// Create the two white lines every 4 units
 	for (int i = 0; i < (VIEW_HEIGHT / SPRITE_HEIGHT) / 4; i++)
 	{
-		actorList.push_back(new WhiteBorderLine(false, i * 4.0 * static_cast<double>(SPRITE_HEIGHT), this));
+		actorVector.push_back(new WhiteBorderLine(false, i * 4.0 * static_cast<double>(SPRITE_HEIGHT), this));
 		auto* const white_border_line = new WhiteBorderLine(true, i * 4.0 * static_cast<double>(SPRITE_HEIGHT), this);
-		actorList.push_back(white_border_line);
+		actorVector.push_back(white_border_line);
 		unitsSinceLastAddedWhiteLine = (static_cast<double>(VIEW_HEIGHT) - SPRITE_HEIGHT) - white_border_line->getY();
 	}
 }
@@ -39,7 +39,7 @@ int StudentWorld::init()
 {
 	// Clear out the current stuff
 	m_ghost_racer = nullptr;
-	actorList.clear();
+	actorVector.clear();
 	m_short_circuit_end          = false;
 	unitsSinceLastAddedWhiteLine = 0;
 
@@ -52,7 +52,7 @@ int StudentWorld::init()
 
 	// Create ghost rider
 	auto* ghost_racer = new GhostRacer(this);
-	actorList.push_back(ghost_racer);
+	actorVector.push_back(ghost_racer);
 	m_ghost_racer = ghost_racer;
 
 	return GWSTATUS_CONTINUE_GAME;
@@ -66,13 +66,13 @@ void StudentWorld::add_new_lines()
 
 	if (unitsSinceLastAddedWhiteLine >= SPRITE_HEIGHT)
 	{
-		actorList.push_back(new YellowBorderLine(false, newBorderY, this));
-		actorList.push_back(new YellowBorderLine(true, newBorderY, this));
+		actorVector.push_back(new YellowBorderLine(false, newBorderY, this));
+		actorVector.push_back(new YellowBorderLine(true, newBorderY, this));
 	}
 	if (unitsSinceLastAddedWhiteLine >= 4.0 * SPRITE_HEIGHT)
 	{
-		actorList.push_back(new WhiteBorderLine(false, newBorderY, this));
-		actorList.push_back(new WhiteBorderLine(true, newBorderY, this));
+		actorVector.push_back(new WhiteBorderLine(false, newBorderY, this));
+		actorVector.push_back(new WhiteBorderLine(true, newBorderY, this));
 		unitsSinceLastAddedWhiteLine = 0;
 	}
 
@@ -83,7 +83,7 @@ int StudentWorld::move()
 {
 	// Do the doSomethings
 	{
-		for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
+		for (auto actorIterator = actorVector.begin(); actorIterator < actorVector.end(); ++actorIterator)
 		{
 			(*actorIterator)->doSomething();
 			if (checkShortCircuitEnd())
@@ -97,7 +97,7 @@ int StudentWorld::move()
 
 	// Remove dead actors
 	{
-		for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
+		for (auto actorIterator = actorVector.begin(); actorIterator < actorVector.end(); ++actorIterator)
 		{
 			if (!ghost_racer()->alive())
 			{
@@ -107,7 +107,7 @@ int StudentWorld::move()
 			if (!(*actorIterator)->alive())
 			{
 				delete (*actorIterator);
-				actorIterator = actorList.erase(actorIterator);
+				actorIterator = actorVector.erase(actorIterator);
 			}
 		}
 	}
@@ -143,7 +143,7 @@ int StudentWorld::move()
 /// </summary>
 void StudentWorld::cleanUp()
 {
-	for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
+	for (auto actorIterator = actorVector.begin(); actorIterator < actorVector.end(); ++actorIterator)
 	{
 		delete *actorIterator;
 	}
@@ -155,7 +155,7 @@ void StudentWorld::add_oil_slick()
 {
 	if (randInt(0, max(150 - (getLevel() * 10), 40)) == 0)
 	{
-		actorList.push_back(new OilSlick(random_x_value(), VIEW_HEIGHT, this));
+		actorVector.push_back(new OilSlick(random_x_value(), VIEW_HEIGHT, this));
 	}
 }
 
@@ -218,7 +218,7 @@ void StudentWorld::add_zombie_cab()
 	// All 3 lanes are too dangerous to add a cab, so we don't do anything
 	if (laneChoice == -1) { return; }
 
-	actorList.push_back(new ZombieCab(laneToCoord(laneChoice), startHeight, startSpeed, this));
+	actorVector.push_back(new ZombieCab(laneToCoord(laneChoice), startHeight, startSpeed, this));
 }
 
 
@@ -227,7 +227,7 @@ void StudentWorld::add_holy_water()
 	const int ChanceOfHolyWater = 100 + 10 * getLevel();
 	if (randInt(0, ChanceOfHolyWater) == 0)
 	{
-		actorList.push_back(new HolyWaterGoodie(random_x_value(), VIEW_HEIGHT, this));
+		actorVector.push_back(new HolyWaterGoodie(random_x_value(), VIEW_HEIGHT, this));
 	}
 }
 
@@ -236,7 +236,7 @@ void StudentWorld::add_human_peds()
 	const int chance_of_human_ped = max(200 - getLevel() * 10, 30);
 	if (randInt(0, chance_of_human_ped) == 0)
 	{
-		actorList.push_back(new HumanPedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
+		actorVector.push_back(new HumanPedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
 	}
 }
 
@@ -244,25 +244,31 @@ void StudentWorld::add_zombie_peds()
 {
 	if (randInt(0, max(100 - (getLevel() * 10), 20)) == 0)
 	{
-		actorList.push_back(new ZombiePedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
+		actorVector.push_back(new ZombiePedestrian(randInt(0, VIEW_WIDTH), VIEW_HEIGHT, this));
 	}
 }
 
 void StudentWorld::add_lost_soul()
 {
-	if (randInt(0, 100) == 0) { actorList.push_back(new SoulGoodie(random_x_value(), VIEW_HEIGHT, this)); }
+	if (randInt(0, 100) == 0) { actorVector.push_back(new SoulGoodie(random_x_value(), VIEW_HEIGHT, this)); }
 }
 
 void StudentWorld::addHealthPack(double startX, double startY)
 {
 	// 1 in 5 odds to spawn
-	if (randInt(0, 4) == 0) { actorList.push_back(new HealingGoodie(startX, startY, this)); }
+	if (randInt(0, 4) == 0) { actorVector.push_back(new HealingGoodie(startX, startY, this)); }
+}
+
+void StudentWorld::addHolyWaterSpray(double startX, double startY, int startDir)
+{
+	// This will always spawn a holy water spray
+	actorVector.push_back(new HolyWaterProjectile(startX, startY, startDir, this));
 }
 
 void StudentWorld::add_oil_slick(double startX, double startY)
 {
 	// 1 in 5 odds to spawn
-	if (randInt(0, 4) == 0) { actorList.push_back(new OilSlick(startX, startY, this)); }
+	if (randInt(0, 4) == 0) { actorVector.push_back(new OilSlick(startX, startY, this)); }
 }
 
 #pragma endregion
@@ -298,7 +304,7 @@ double StudentWorld::collisionActorInLane(int lane, double y_coord = 0.0, bool b
 		return -2;
 	}
 
-	for (auto actorIterator = actorList.begin(); actorIterator < actorList.end(); ++actorIterator)
+	for (auto actorIterator = actorVector.begin(); actorIterator < actorVector.end(); ++actorIterator)
 	{
 		if ((*actorIterator)->collisionAvoidanceWorthy() && (*actorIterator)->getX() >= left_search_area && (*
 			actorIterator)->getX() < right_search_area)
@@ -320,6 +326,21 @@ double StudentWorld::collisionActorInLane(int lane, double y_coord = 0.0, bool b
 		}
 	}
 	return -1;
+}
+
+Actor* StudentWorld::projectileCollision(double x_coord, double y_coord, double radius)
+{
+	for (auto actorIterator = actorVector.begin(); actorIterator < actorVector.end(); ++actorIterator)
+	{
+		if ((*actorIterator)->canInteractWithProjectiles())
+		{
+			const double delta_x = abs((*actorIterator)->getX() - x_coord);
+			const double delta_y = abs((*actorIterator)->getY() - y_coord);
+			const double radiuses = (*actorIterator)->getRadius() + radius;
+			if (delta_x < radiuses * 0.25 && delta_y < radiuses * 0.6) { return (*actorIterator); }
+		}
+	}
+	return nullptr;
 }
 
 int StudentWorld::coordToLane(double x_coord)

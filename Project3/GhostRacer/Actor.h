@@ -1,6 +1,7 @@
 // ReSharper disable CppClangTidyModernizeUseEqualsDefault
 // ReSharper disable CppClangTidyHighlighting
 // ReSharper disable CppClangTidyClangDiagnosticInconsistentMissingDestructorOverride
+// ReSharper disable CppClangTidyCppcoreguidelinesSpecialMemberFunctions
 #ifndef ACTOR_H_
 #define ACTOR_H_
 
@@ -23,22 +24,26 @@ public:
 	void          moveDelta(double x, double y) { moveTo(getX() + x, getY() + y); }
 	bool          alive() const { return m_alive; }
 	void          set_alive(bool alive) { m_alive = alive; }
-	int static    flipDirection(int angle);
 	void          playSound(int sound) const { m_game_world->playSound(sound); }
 	GhostRacer*   ghostRacer() const { return m_game_world->ghost_racer(); }
 	StudentWorld* studentWorld() const { return m_game_world; }
 
 	// Property flags for different things. Set to true in a class if these are true for that class, and other functions will check these to see what to do.
 	bool virtual collisionAvoidanceWorthy() const { return false; }
-	bool virtual canBeHealed() const { return false; }
-	bool virtual hasHealth() const { return false; }
-	bool virtual canBeSpun() const { return false; }
 	bool virtual canInteractWithProjectiles() const { return false; }
+
+	// Unused property flags.
+	// bool virtual canBeHealed() const { return false; }
+	// bool virtual hasHealth() const { return false; }
+	// bool virtual canBeSpun() const { return false; }
 
 	// If canInteractWithProjectiles is true, then this function can be called when hit by a projectile. 
 	void virtual doInteractWithProjectile(int damage = 0) {}
 
 	void virtual doSomething() = 0;
+
+	// Helper Funcs
+	static bool isOutOfScreen(double x, double y);
 private:
 	StudentWorld* m_game_world;
 	bool          m_alive;
@@ -56,7 +61,7 @@ public:
 
 	virtual ~MovingActor() { }
 
-	virtual bool move();
+	bool move();
 
 	double v_speed() const;
 	void   set_v_speed(const double m_v_speed) { m_vSpeed = m_v_speed; }
@@ -66,6 +71,23 @@ public:
 private:
 	double m_vSpeed;
 	double m_hSpeed;
+};
+
+
+class HolyWaterProjectile : public Actor
+{
+public:
+	HolyWaterProjectile(double startX, double startY, int dir, StudentWorld* game_world)
+		: Actor(IID_HOLY_WATER_PROJECTILE, startX, startY, dir, 1, 1, game_world), m_max_travel_distance(160),
+		  m_travel_distance(0) {}
+
+	virtual ~HolyWaterProjectile() { }
+
+	void doSomething() override;
+
+private:
+	const int m_max_travel_distance;
+	int       m_travel_distance;
 };
 
 
@@ -102,28 +124,39 @@ private:
 };
 
 
-class HealingGoodie : public Goodie
+class PlayerDestroyableGoodie : public Goodie
 {
 public:
-	HealingGoodie(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_HEAL_GOODIE, startX, startY, 1, game_world) {}
+	PlayerDestroyableGoodie(
+		int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE,
+		int direction = 0) : Goodie(ImageID, startX, startY, size, game_world, sound, direction) {}
 
-	virtual ~HealingGoodie() { }
+	virtual ~PlayerDestroyableGoodie() {}
 
 	bool canInteractWithProjectiles() const override { return true; }
-	void handlePlayerCollision() override;
+	void doInteractWithProjectile(int damage) override { set_alive(false); }
 };
 
 
-class HolyWaterGoodie : public Goodie
+class HealingGoodie : public PlayerDestroyableGoodie
+{
+public:
+	HealingGoodie(double startX, double startY, StudentWorld* game_world)
+		: PlayerDestroyableGoodie(IID_HEAL_GOODIE, startX, startY, 1, game_world) {}
+
+	virtual ~HealingGoodie() { }
+	void    handlePlayerCollision() override;
+};
+
+
+class HolyWaterGoodie : public PlayerDestroyableGoodie
 {
 public:
 	HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)
-		: Goodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world, SOUND_GOT_GOODIE, 90) {}
+		: PlayerDestroyableGoodie(IID_HOLY_WATER_GOODIE, startX, startY, 2, game_world, SOUND_GOT_GOODIE, 90) {}
 
 	virtual ~HolyWaterGoodie() { }
 
-	bool canInteractWithProjectiles() const override { return true; }
 	void handlePlayerCollision() override;
 };
 
@@ -208,6 +241,9 @@ public:
 	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
 	bool collisionAvoidanceWorthy() const override { return true; }
+
+private:
+	int static flipDirection(int angle);
 };
 
 
@@ -275,7 +311,7 @@ public:
 	int  racer_speed() const { return m_racer_speed; }
 	void set_racer_speed(const int racer_speed) { this->m_racer_speed = racer_speed; }
 
-	bool canBeSpun() const override { return true; }
+	// bool canBeSpun() const override { return true; }
 	bool collisionAvoidanceWorthy() const override { return true; }
 private:
 	int m_holy_water;

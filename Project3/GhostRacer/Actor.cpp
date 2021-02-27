@@ -8,12 +8,15 @@
 
 constexpr double m_pi = 3.1415926535;
 
-int Actor::flipDirection(int angle)
+int HumanPedestrian::flipDirection(int angle)
 {
 	angle += 180;
 	if (angle > 360) { return angle % 360; }
 	return angle;
 }
+
+
+bool Actor::isOutOfScreen(double x, double y) { return x < 0 || y < 0 || x > VIEW_WIDTH || y > VIEW_HEIGHT; }
 
 
 /// <summary>
@@ -23,7 +26,7 @@ int Actor::flipDirection(int angle)
 bool MovingActor::move()
 {
 	moveTo(getX() + h_speed(), getY() + v_speed());
-	if (getX() < 0 || getY() < 0 || getX() > VIEW_WIDTH || getY() > VIEW_HEIGHT) { return true; }
+	if (Actor::isOutOfScreen(getX(), getY())) { return true; }
 	return false;
 }
 
@@ -46,7 +49,6 @@ void Goodie::doSomething()
 		handlePlayerCollision();
 	}
 }
-
 
 void HealingGoodie::handlePlayerCollision()
 {
@@ -72,6 +74,27 @@ void SoulGoodie::handlePlayerCollision()
 }
 
 void OilSlick::handlePlayerCollision() { ghostRacer()->spinOut(); }
+
+void HolyWaterProjectile::doSomething()
+{
+	if (!alive()) { return; }
+
+	// Check for activation
+	Actor* hitActor = studentWorld()->projectileCollision(getX(), getY(), getRadius());
+	if (hitActor != nullptr)
+	{
+		hitActor->doInteractWithProjectile(1);
+		set_alive(false);
+		return;
+	}
+	else
+	{
+		moveForward(SPRITE_HEIGHT);
+		m_travel_distance += SPRITE_HEIGHT;
+	}
+
+	if (Actor::isOutOfScreen(getX(), getY()) || m_travel_distance >= m_max_travel_distance) { set_alive(false); }
+}
 
 /// <summary>
 /// Checks if this object overlaps with the player
@@ -254,7 +277,7 @@ void ZombieCab::doInteractWithProjectile(int damage)
 	{
 		set_alive(false);
 		playSound(SOUND_VEHICLE_DIE);
-		studentWorld()->addHealthPack(getX(), getY());
+		studentWorld()->add_oil_slick(getX(), getY());
 		studentWorld()->increaseScore(200);
 		return;
 	}
@@ -377,13 +400,20 @@ void GhostRacer::getHealed(int heal_amount)
 
 void GhostRacer::addHolyWater(int amount) { m_holy_water += amount; }
 
-// TODO: Implement holy water firing
 void GhostRacer::fireHolyWater()
 {
 	if (holy_water() > 0)
 	{
-		// TODO: Finish implementing fireHolyWater
-		//  See page 30
+		// Angle with 0 forward, positive left, negative right
+		const double theta = -(getDirection() - 90.0);
+
+		const double deltaX = sin(theta * m_pi / 180) * SPRITE_HEIGHT;
+		const double spawnX = getX() + deltaX;
+
+		const double deltaY = cos(theta * m_pi / 180) * SPRITE_HEIGHT;
+		const double spawnY = getY() + deltaY;
+		std::cerr << spawnX << "|" << spawnY << std::endl;
+		studentWorld()->addHolyWaterSpray(spawnX, spawnY, getDirection());
 		playSound(SOUND_PLAYER_SPRAY);
 		m_holy_water--;
 	}
