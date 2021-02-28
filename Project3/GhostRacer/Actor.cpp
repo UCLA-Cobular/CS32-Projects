@@ -15,9 +15,7 @@ int HumanPedestrian::flipDirection(int angle)
 	return angle;
 }
 
-
 bool Actor::isOutOfScreen(double x, double y) { return x < 0 || y < 0 || x > VIEW_WIDTH || y > VIEW_HEIGHT; }
-
 
 /// <summary>
 /// Moves the player and will return true if the object was killed for being offscreen. This is to be used to cascade back up after.

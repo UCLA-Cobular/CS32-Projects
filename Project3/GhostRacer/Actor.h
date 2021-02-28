@@ -32,11 +32,6 @@ public:
 	bool virtual collisionAvoidanceWorthy() const { return false; }
 	bool virtual canInteractWithProjectiles() const { return false; }
 
-	// Unused property flags.
-	// bool virtual canBeHealed() const { return false; }
-	// bool virtual hasHealth() const { return false; }
-	// bool virtual canBeSpun() const { return false; }
-
 	// If canInteractWithProjectiles is true, then this function can be called when hit by a projectile. 
 	void virtual doInteractWithProjectile(int damage = 0) {}
 
@@ -213,19 +208,22 @@ class MovementPlanActor : public HasHealthActor
 {
 public:
 	MovementPlanActor(
-		int ImageID, double      startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
-		int starting_health, int move_plan_dist, StudentWorld* game_world)
+		int ImageID, double         startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed,
+		int starting_health, double move_plan_dist, StudentWorld* game_world)
 		: HasHealthActor(ImageID, startX, startY, dir, size, depth, m_vSpeed, m_hSpeed, starting_health, game_world),
 		  m_move_plan_dist(move_plan_dist) {}
 
 	virtual ~MovementPlanActor() { }
 
-	int  move_plan_dist() const { return m_move_plan_dist; }
-	void decrement_move_plan_dist() { m_move_plan_dist--; }
-	void set_move_plan_dist(int dist) { m_move_plan_dist = dist; }
-	void createNewMovePlan();
+	bool canInteractWithProjectiles() const override { return true; }
+	bool collisionAvoidanceWorthy() const override { return true; }
+
+	double move_plan_dist() const { return m_move_plan_dist; }
+	void   decrement_move_plan_dist() { m_move_plan_dist--; }
+	void   set_move_plan_dist(double dist) { m_move_plan_dist = dist; }
+	void   createNewMovePlan();
 private:
-	int m_move_plan_dist;
+	double m_move_plan_dist;
 };
 
 
@@ -238,9 +236,7 @@ public:
 	virtual ~HumanPedestrian() { }
 
 	void doSomething() override;
-	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
-	bool collisionAvoidanceWorthy() const override { return true; }
 
 private:
 	int static flipDirection(int angle);
@@ -256,9 +252,7 @@ public:
 	virtual ~ZombiePedestrian() { }
 
 	void doSomething() override;
-	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage = 0) override;
-	bool collisionAvoidanceWorthy() const override { return true; }
 
 private:
 	int m_time_until_grunt;
@@ -268,16 +262,13 @@ private:
 class ZombieCab : public MovementPlanActor
 {
 public:
-	ZombieCab(double startX, double startY, int m_vSpeed, StudentWorld* game_world)
+	ZombieCab(double startX, double startY, double m_vSpeed, StudentWorld* game_world)
 		: MovementPlanActor(IID_ZOMBIE_CAB, startX, startY, 90, 4, 0, m_vSpeed, 0, 3, 0, game_world),
 		  hasDamagedGhostRacer(false) {}
 
 	virtual ~ZombieCab() { }
 
 	void doSomething() override;
-
-	bool collisionAvoidanceWorthy() const override { return true; }
-	bool canInteractWithProjectiles() const override { return true; }
 	void doInteractWithProjectile(int damage) override;
 private:
 	bool hasDamagedGhostRacer;
@@ -302,18 +293,18 @@ public:
 	void spinOut();
 	void getHealed(int heal_amount);
 	void addHolyWater(int amount);
-	void fireHolyWater();
-	void change_health(int health) { m_health += health; }
-	void set_health(int health) { m_health = health; }
 
-	int  get_health() const { return m_health; }
-	int  holy_water() const { return m_holy_water; }
-	int  racer_speed() const { return m_racer_speed; }
-	void set_racer_speed(const int racer_speed) { this->m_racer_speed = racer_speed; }
+	int get_health() const { return m_health; }
+	int holy_water() const { return m_holy_water; }
+	int racer_speed() const { return m_racer_speed; }
 
-	// bool canBeSpun() const override { return true; }
 	bool collisionAvoidanceWorthy() const override { return true; }
 private:
+	void set_racer_speed(const int racer_speed) { this->m_racer_speed = racer_speed; }
+	void set_health(int health) { m_health = health; }
+	void change_health(int health) { m_health += health; }
+	void fireHolyWater();
+
 	int m_holy_water;
 	int m_racer_speed;
 	int m_health;
@@ -323,10 +314,10 @@ private:
 class BorderLine : public MovingActor
 {
 public:
-	virtual ~BorderLine() { }
-
 	BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)
 		: MovingActor(ImageID, startX, startY, 0, 2, 2, -4, 0, game_world) { }
+
+	virtual ~BorderLine() { }
 
 	void doSomething() override;
 };
@@ -335,9 +326,9 @@ public:
 class YellowBorderLine : public BorderLine
 {
 public:
-	virtual ~YellowBorderLine() { }
-
 	YellowBorderLine(bool left, double startY, StudentWorld* game_world);
+
+	virtual ~YellowBorderLine() { }
 private:
 	static double start_x(bool left);
 };
@@ -346,10 +337,9 @@ private:
 class WhiteBorderLine : public BorderLine
 {
 public:
-	virtual ~WhiteBorderLine() { }
-
 	WhiteBorderLine(bool left, double startY, StudentWorld* game_world);
 
+	virtual ~WhiteBorderLine() { }
 private:
 	static double start_x(bool left);
 };

@@ -1,0 +1,940 @@
+# CS Project 3 Report
+
+**I recommend viewing this with some kind of markdown viewer, it'll be a whole lot easier to read. VS Code should have one, or like the internet idk**
+
+# Part 1 - High Level Descriptions of Public Member Funcs
+
+## StudentWorld
+
+### `StudentWorld(std::string assetPath)`
+
+Description: Constructs the StudentWorld, it initializes the required vars for first time use. Pretty simple.
+
+Why here: N/A
+
+Why virtual (if applicable): It's a constructor so it can't be vi
+
+### `virtual ~StudentWorld();`
+
+Description: Destructs the StudentWorld, just calls `cleanUp()`.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `int init() override`
+
+Description: Called by the framework to initialize things. It resets things between levels, including clearing the `actorVector` and a number of other private vars. Also creates the first set of lines. 
+
+Why here: Required to be here by framework
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `int move() override;`
+
+Description: Called by the framework, it runs all actor doSomethings, removes dead actors, adds new actors, checks for level completion, and does a few smaller things 
+
+Why here: Required to be here by framework
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void cleanUp() override`
+
+Description: Called by the framework, essentially deletes all actors
+
+Why here: Required to be here by framework
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void updateDisplayText()`
+
+Description: Updates the display text to match the current information. Called every loop. 
+
+Why here: Must call member functions of the GameWorld, meaning it must be here on the StudentWorld class and not an actor.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void saveSoul()`
+
+Description: Called when the player collects a lost soul, decreasing the number of lost souls left to collect this level, which will be checked every loop. 
+
+Why here: It decrements a private variable of StudentWorld, so it must be on StudentWorld not an actor. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void shortCircuitEndLevel()`
+
+Description: Forces the level to end quickly, after this actor finishes doing something. Normally, level finishing isn't processed until all actors have been able to do something, but if an actor really needs to end the level and stop all others from being processed, it can call this and return. Used by the Human Pedestrian to short circuit end the level on player collision.
+
+Why here: Acts as a setter for a private variable, so it must be on StudentWorld, not an actor. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void addHealthPack(double startX, double startY)`
+
+Description: Has a 1/5 chance to spawn a health pack at the given position every call.
+
+Why here: Requires access to the `actorVector`, so it must be here in the StudentWorld
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void addHolyWaterSpray(double startX, double startY, int startDir)`
+
+Description: Creates a holy water spray with the given information.
+
+Why here: Requires access to the `actorVector`, so it must be here in the StudentWorld
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void add_oil_slick(double startX, double startY)`
+
+Description: Will, in one out of 5 cases, spawn an oil slick at the given x and y position.
+
+Why here: Requires access to the `actorVector`, so it must be here in the StudentWorld
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `double collisionActorInLane(int lane, double y_coord, bool behind)`
+
+Description: Checks if there is an actor that should be relevant to collisions in the given lane (0-2), and if so, returns the distance to said actor.  It can also check either in front of or behind the given position depending on the given bool.
+
+Why here: Requires access to the `actorVector`, so it must be here in the StudentWorld
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `Actor* projectileCollision(double x_coord, double y_coord, double radius)`
+
+Description: Returns a pointer to an actor that interacts with projectiles, if one is collided with at the given coords and radius. Otherwise, returns `nullptr`.
+
+Why here: This interacts with the `actorVector`, so it needs to be on the StudentWorld class.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `static int coordToLane(double x_coord)`
+
+Description: Takes an x coordinate and returns the lane it's in.
+
+Why here: It's used in a few actors, but since it is static and relating to the world, it made the most sense to place in the StudentWorld class.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `GhostRacer* ghost_racer() const`
+
+Description: Returns the pointer to the Ghost Racer instance, just your basic getter.
+
+Why here: Only the StudentWorld knows where the Ghost Racer is, but a number of classes depend on this information, so it's critical we store it here in order for actors to be able to use it.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## Actor
+
+### `Actor(int ImageID, double startX, double startY, int dir, int size, int depth, StudentWorld* game_world)`
+
+Description: Constructs the actor. This requires many things to be passed down, including a number of the things for GraphObject as well as the student world pointer. 
+
+Why here: N/A
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `virtual ~Actor()`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void moveDelta(double x, double y)`
+
+Description: Acts as an enhancement to the moveTo command, allowing simpler movement at times. 
+
+Why here: Since this is an extension to the functions provided by GraphObject, it makes sense for this to be at a high level in the inheritance hierarchy as well. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `bool alive() const`
+
+Description: Acts as a getter for the alive status.
+
+Why here: Alive is a property of all Actors, so the getters and setters need to live here.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void set_alive(bool alive)`
+
+Description: Acts as a setter for the private alive variable
+
+Why here: Alive is a property of all Actors, so the getters and setters need to live here.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void playSound(int sound) const`
+
+Description: A helper function to play a sound on the game world through the private variable, most similar to a setter. 
+
+Why here: Almost every actor needs to play sounds so it makes sense for this to be on the base class.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `GhostRacer* ghostRacer() const`
+
+Description: Returns a pointer to the Ghost Racer
+
+Why here: A wide range of subclasses may need access to this, and so it makes the most sense to leave this here in the base class. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `StudentWorld* studentWorld() const`
+
+Description: Returns a pointer to the student world instance
+
+Why here: All subclasses may need to access the student world instance, and this is a getter for a private variable on StudentWorld, so this needs to be here at the base class to keep from repeating ourselves too much.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `bool virtual collisionAvoidanceWorthy() const`, `bool virtual canInteractWithProjectiles() const`
+
+Description: This pair of funcs are used to detect if an Actor instance has a certain property that the game needs to know about. Returns false by default and must be overridden in a derived class to mark either of these properties. 
+
+Why here: This needs to be callable from an `Actor*` pointer, so it must be implemented on the base class at least. 
+
+Why virtual (if applicable): Normal virtual because the default implementation, returning false, is correct for the vast majority of subclasses, but a few subclasses will need to have a different implementation.
+
+### `void virtual doInteractWithProjectile(int damage = 0)`
+
+Description: Provides a standard interface for projectiles to interact with Actors, if they can. Depends on the specific actor.
+
+Why here: This needs to be callable from an `Actor*` pointer, so it must be implemented on the base class at least. 
+
+Why virtual (if applicable): Only normal virtual because the vast majority of actors will not need to implement this function and the default do-nothing implementation will work in case something goes wrong. Needs to be virtual, however, because a few classes (every class that can interact with projectiles) needs to be able to implement it's own version of this.
+
+### `void virtual doSomething() = 0`
+
+Description: Called on every actor every loop, it allows all the actors to move and, well, do something. Heavily varied so there's little to say here.
+
+Why here: Needs to be implemented by every actor, so it must be in the root actor class. 
+
+Why virtual (if applicable): An abstract Actor isn't able to do anything, and shouldn't be able to be instantiated, so this is a textbook case of pure virtual
+
+### `static bool isOutOfScreen(double x, double y)`
+
+Description: Checks if a coordinate is out of the screen. Static because the instance does not matter. The same check needed to be made twice so I abstracted it out. 
+
+Why here: It made sense for this to be on Actor, as it is only used by them. It could have just as easily went in StudentWorld though, this isn't really important because of the static. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## MovingActor
+
+### `MovingActor(int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed, StudentWorld* game_world)`
+
+Description: Instantiates the MovingActor, including importantly the vSpeed and hSpeed which are directly relevant to the class
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~MovingActor() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `bool move()`
+
+Description: Moves the actor according to the currently set h and v speeds, and returns true if the actor is off the edge of the screen so it can be killed. I decided to do it this way, doing the killing in the actor's doSomething instead of inside this move func, because I believe it's more clear with the killing being done in the doSomething. 
+
+Why here: A number of actors require simple movement like this, and so it makes sense to abstract out the movement since it's pretty bog standard.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass as everything that inherits from this follows the same movement rules
+
+### `double v_speed() const`, `double h_speed() const`
+
+Description: A simple getter for the current h and v speeds
+
+Why here: This is required to access the private vars that store the speed
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void set_v_speed(const double m_v_speed)`, `void set_h_speed(const double m_h_speed)`
+
+Description: A simple setter for the current v and h speeds
+
+Why here: This is required to access the private vars that store the speed
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## HolyWaterProjectile
+
+### `HolyWaterProjectile(double startX, double startY, int dir, StudentWorld* game_world)`
+
+Description: Constructs the Holy Water Projectile. This can make a number of assumptions about the projectiles, greatly simplifying the constructor.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HolyWaterProjectile() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Implements the doSomething specifically for the Holy Water Projectiles. 
+
+Why here: First, this class has a unique doSomething, so this needs to be implemented here. We also need to make the class concrete, and since this is the only pure virtual function in the inheritance chain, it must be implemented if we want to have an instance of this class. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## CollidesWithPlayer
+
+### `CollidesWithPlayer(int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed, StudentWorld* game_world)`
+
+Description: Constructs an object that can collide with the player. This needs to take quite a number of parameters 
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~CollidesWithPlayer() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `bool collidedWithPlayer() const`
+
+Description:  Returns if the object is overlapping with the player. A number of classes need access to this, so it makes sense to make it it's own class for abstraction.
+
+Why here: This is the parent of a number of classes that require collision detection, so it makes sense to make it part of a parent class
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## Goodie
+
+### `Goodie(int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE, int direction = 0)`
+
+Description: The parent class for the destructor, includes a few defaults that are the same for most, but not all, goodies.
+
+Why here: 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `virtual ~Goodie() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: All goodies have a very similar doSomething routine with only minor changes, so it makes more sense to only write those minor changes again for each goodie rather than the whole general control flow of trying to move, doing something, then doing something else special if a collision occurs. 
+
+Why here: This is the base class for a number of similar goodies, so it makes sense to put the core control flow for all of them in one place. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass.
+
+### `virtual void doSomethingSpecific()`
+
+Description: A function that defaults to having no body, designed to be optionally overridden by a goodie if it needs to do something specific every loop. 
+
+Why here: A few goodies need to add something to the doSomething, so this works well with a default empty implementation that can optionally be added to. 
+
+Why virtual (if applicable): Only some goodies need to implement these special changes to the doSomething loop, so it's not pure virtual as the default implementation is fine for some goodies. 
+
+### `virtual void handlePlayerCollision() = 0`
+
+Description: A function to implement the special case when the player collides with the specific goodie. 
+
+Why here: Again, this is tied into the doSomething implementation above, so the pure virtual version must be defined here in the base class of the other goodies. 
+
+Why virtual (if applicable): Every goodie needs to do something when it collides with the player, so we can make ****it pure virtual, which also has the side affect of not allowing an instance of Goodie by itself. 
+
+## PlayerDestroyableGoodie
+
+### `PlayerDestroyableGoodie(int ImageID, double startX, double startY, int size, StudentWorld* game_world, int sound = SOUND_GOT_GOODIE, int direction = 0)`
+
+Description: This is the same as the Goodie constructor because it should just add a bit of functionality to it's children but does not need to change the interface. While it may not be necessary to include the sound variable here, I believe it makes more sense if this were a real project to do so, as it's very possible that a new player destroyable goodie may one day be added that does require the ability to change this. Therefore, it should be kept around just in case, especially since it has very little impact on the performance.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~PlayerDestroyableGoodie() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `bool canInteractWithProjectiles() const override`
+
+Description: Marks the goodie as being able to be hit with projectiles
+
+Why here: This functionality occurs across a few goodies, so it makes the most sense to abstract it out like this.
+
+Why virtual (if applicable): Overrides the projectile interaction because multiple goodies have the same projectile interaction of getting deleted, so this interaction should be abstracted out. 
+
+### `void doInteractWithProjectile(int damage) override`
+
+Description: Destroys the goodie when hit by a projectile
+
+Why here: This functionality occurs across a few goodies, so it makes the most sense to abstract it out like this.
+
+Why virtual (if applicable): Overrides the projectile interaction because multiple goodies have the same projectile interaction of getting deleted, so this interaction should be abstracted out. 
+
+## HealingGoodie
+
+### `HealingGoodie(double startX, double startY, StudentWorld* game_world)`
+
+Description: Constructs a healing goodie. Again, much of this can fall back to defaults which means the constructor can be pretty simple compared to it's base.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HealingGoodie() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void handlePlayerCollision() override`
+
+Description: Specifies exactly what should happen when the goodie collides with a player, in this case heal the player 5 hp and some points
+
+Why here: This class must do something unique on colision, so this needs to be here. This is better than having all goodies having a similar but different DoSomething.
+
+Why virtual (if applicable): Since we want this class to be concrete, we need to implement the last pure virtual function, enabling instances of this class to be created. 
+
+## HolyWaterGoodie
+
+### `HolyWaterGoodie(double startX, double startY, StudentWorld* game_world)`
+
+Description: Constructs a holy water goodie. Again, much of this can fall back to defaults which means the constructor can be pretty simple compared to it's base.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HolyWaterGoodie() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void handlePlayerCollision() override`
+
+Description: Specifies exactly what should happen when the goodie collides with a player, in this case give the player 10 holy water and some points.
+
+Why here: This class must do something unique on collision, so this needs to be here. This is better than having all goodies having a similar but different DoSomething.
+
+Why virtual (if applicable): Since we want this class to be concrete, we need to implement the last pure virtual function, enabling instances of this class to be created. 
+
+## SoulGoodie
+
+### `SoulGoodie(double startX, double startY, StudentWorld* game_world)`
+
+Description: Constructs a new lost soul, which behaves greatly like the other goodies even if it seems a bit different. Again, much of this can fall back to defaults which means the constructor can be pretty simple compared to it's base.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HolyWaterGoodie() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomethingSpecific() override`
+
+Description: Here we see that `doSomethingSpecific` function we wrote earlier paying off, as it allows us to easily setup the rotation on the lost souls in a way that works really well!
+
+Why here: This class requires `doSomethingSpecific` to be more than the empty implementation it is by default, so we override it here in this class. It's the only class that requires this specific implementation of `doSomethingSpecific`, so we don't need to abstract this out to something else. 
+
+Why virtual (if applicable): We want to implement something specific here that happens every loop, so we can use this function to accomplish this. 
+
+### `void handlePlayerCollision() override`
+
+Description: Specifies exactly what should happen when the goodie collides with a player, in this case give decrement the number of souls left to save and give them some points.
+
+Why here: This class must do something unique on collision, so this needs to be here. This is better than having all goodies having a similar but different `doSomething`.
+
+Why virtual (if applicable): Since we want this class to be concrete, we need to implement the last pure virtual function, enabling instances of this class to be created. 
+
+## OilSlick
+
+### `OilSlick(double startX, double startY, StudentWorld* game_world)`
+
+Description: Constructs a new oil slick, which behaves greatly like the other goodies even if it seems a bit different. Again, much of this can fall back to defaults which means the constructor can be pretty simple compared to it's base.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~OilSlick() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void handlePlayerCollision() override`
+
+Description: Specifies exactly what should happen when the goodie collides with a player, in this case spin out the player
+
+Why here: This class must do something unique on collision, so this needs to be here. This is better than having all goodies having a similar but different `doSomething`.
+
+Why virtual (if applicable): Since we want this class to be concrete, we need to implement the last pure virtual function, enabling instances of this class to be created. 
+
+### HasHealthActor
+
+### `HasHealthActor(int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed, int starting_health, StudentWorld* game_world)`
+
+Description: Creates an actor with some amount of starting health and provides some functions to modulate said health.
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HasHealthActor() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `int get_health() const`
+
+Description: A simple getter for the health
+
+Why here: All health actors might need this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void set_health(const int m_health)`
+
+Description: A simple setter for the health, including a check to kill the actor if it gets too low.
+
+Why here: All health actors might need to manipulate this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void change_health(const int delta_health);`
+
+Description: Increments or decrements the health to create a more useful interface, including a check to kill the actor if it gets too low.
+
+Why here: All health actors might need to manipulate this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## MovementPlanActor
+
+### `MovementPlanActor(int ImageID, double startX, double startY, int dir, int size, int depth, int m_vSpeed, int m_hSpeed, int starting_health, int move_plan_dist, StudentWorld* game_world)`
+
+Description: Creates an actor with a movement plan according to the given information. 
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~MovementPlanActor() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `int move_plan_dist() const`
+
+Description: A simple getter for the remaining movement plan distance
+
+Why here: All movement plan actors might need this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `int decrement_move_plan_dist() const`
+
+Description: A simple decrementer for the move plan dist, which is the most common operation so it made the most sense to expose this interface. 
+
+Why here: All movement plan actors might need this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void set_move_plan_dist(int dist)`
+
+Description: Allows for resetting the movement plan dist to a new value when it's time
+
+Why here: All movement plan actors might need this information, so it makes sense to expose it here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void createNewMovePlan()`
+
+Description: Generate a new movement plan for the actor. 
+
+Why here: This logic is actually shared by a few different movement plan actors, so it makes a lot of sense for this to go here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `bool canInteractWithProjectiles() const override`
+
+Description: Marks the class as being able to be hit with projectiles
+
+Why here: All children classes can interact with projectiles, so we can override this to return true here. However, we still need to remember to implement `doInteractWithProjectile` for every subclass so that we actually do something. 
+
+Why virtual (if applicable): Overrides the projectile interactability check because this needs to interact with projectiles :P
+
+### `bool collisionAvoidanceWorthy() const override`
+
+Description: Marks the class as being something that should avoid collisions. 
+
+Why here: All children classes should avoid collisions, so we can override this to return true here. 
+
+Why virtual (if applicable): Overrides the collision avoidance status because all subclasses need to be avoided. 
+
+## HumanPedestrian
+
+### `HumanPedestrian(double startX, double startY, StudentWorld* game_world)`
+
+Description: Creates a human pedestrian, and as usual for the concrete classes, a number of defaults are the same for all, making this a simple constructor
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~HumanPedestrian() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Controls the actions for human pedestrians
+
+Why here: Human Pedestrians have a largely unique set of actions that they need to follow, making this a reasonable place to implement the doSomething. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void doInteractWithProjectile(int damage = 0) override`
+
+Description: Provides an implementation of how HumanPedestrians should interact with projectiles so that the projectiles can just call this and it handles everything on it's own. 
+
+Why here: This class has a unique response to being hit with a projectile so this needs to be here to provide that functionality.
+
+Why virtual (if applicable): This is an override of the default implementation, which normally does nothing. 
+
+## ZombiePedestrian
+
+### `ZombiePedestrian(double startX, double startY, StudentWorld* game_world)`
+
+Description: Creates a zombie pedestrian, and as usual for the concrete classes, a number of defaults are the same for all, making this a simple constructor
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~ZombiePedestrian() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Controls the actions for zombie pedestrians
+
+Why here: Zombie Pedestrians have a largely unique set of actions that they need to follow, making this a reasonable place to implement the doSomething. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void doInteractWithProjectile(int damage = 0) override`
+
+Description: Provides an implementation of how ZombiePedestrian should interact with projectiles so that the projectiles can just call this and it handles everything on it's own. 
+
+Why here: This class has a unique response to being hit with a projectile so this needs to be here to provide that functionality.
+
+Why virtual (if applicable): This is an override of the default implementation, which normally does nothing. 
+
+## ZombieCab
+
+### `ZombieCab(double startX, double startY, StudentWorld* game_world)`
+
+Description: Creates a zombie cab, and as usual for the concrete classes, a number of defaults are the same for all, making this a pretty simple constructor. This also initializes the hasHitPlayer var, which is important later on 
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~ZombieCab() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Controls the actions for zombie cabs
+
+Why here: Zombie Pedestrians have a largely unique set of actions that they need to follow, making this a reasonable place to implement the doSomething. This is pretty complex, but it just follows the logic from the spec.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void doInteractWithProjectile(int damage = 0) override`
+
+Description: Provides an implementation of how ZombieCab should interact with projectiles so that the projectiles can just call this and it handles everything on it's own. 
+
+Why here: This class has a unique response to being hit with a projectile so this needs to be here to provide that functionality.
+
+Why virtual (if applicable): This is an override of the default implementation, which normally does nothing. 
+
+## GhostRacer
+
+### `GhostRacer(StudentWorld* game_world)`
+
+Description: Initializes the GhostRacer. There is only one parameter because there aren't really any options here and basically everything is defined already. 
+
+Why here: N/A
+
+Why virtual (if applicable): N/A
+
+### `virtual ~GhostRacer() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Does the doSomething for the GhostRacer. This is also sorta complex but again it just follows the spec, checking if it's off the edges,  getting key data and taking action based on that, and then moving the racer. 
+
+Why here: The GhostRacer needs to do something unique, so doSomething has to be implemented all the way down here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void move()`
+
+Description: Distinct from the MovementActor `move()` above (because ghost racer movement is pretty fundamentally different to all other actors that slide up or down the screen), this gets the direction of the racer, calculates the change in x based on that angle, and then does that movement. 
+
+Why here: The GhostRacer has a unique set of movement demands with it's special trig calc involved in it's movement system, so it gets it's own implementation. It also doesn't really need to check if it's gone off the edge of the screen with this, so all the more reason for it to have it's own system for the minor perf improvement not making that check will give. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void hurtGhostRacer(int damage)`
+
+Description: A few different things need to hurt the GhostRacer, and this provides a very simple interface for that. 
+
+Why here: This is directly applicable to the GhostRacer itself, so it's done here. More specifically, the GhostRacer manages it's own health system, as the GhostRacer health works very differently to other classes with health, so it makes some amount of sense to do it this way instead. Also, the existing `HasHealthActor` class is derived from MovingActor and CollidesWithPlayer, neither of which I really want for the GhostRacer, so it makes the most sense to manage it's own health instead of using that. If I was able to use C# interfaces or something, I could have structured this better, but pure virtual classes as well as multiple and virtual inheritance are just too much of a headache in C++ (I spent a good 4 hours figuring it out and I could have used it if only I could have added a default constructor and lazy initializer to GraphObject, alas it isn't possible in this case). Anyway, that's why there's a bit of repetition in the health and movement systems on the GhostRacer. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void spinOut()`
+
+Description: Provides a way for oil slicks to spin out the GhostRacer. 
+
+Why here: This needs to operate on private properties (like angle and horizontal speed) of the ghost racer, so we need to have this on the GhostRacer as well. Of note is the way we access this, through a special pointer to GhostRacer, so we don't need this on the base actor. The spec says we can store a special pointer to GhostRacer, so this system is acceptable. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void getHealed(int heal_amount)`
+
+Description: Provides a way to explicitly heal the GhostRacer
+
+Why here: This needs to operate on private properties of the ghost racer, so we need to have this on the GhostRacer as well.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `void addHolyWater(int amount)`
+
+Description: Provides a way to add more holy water to the GhostRacer
+
+Why here: This needs to operate on private properties of the ghost racer, so we need to have this on the GhostRacer as well.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `int get_health() const`
+
+Description: A simple getter for the health of the GhostRacer, checked in a few places like the ribbon as well as internally.
+
+Why here: This needs to operate on private properties of the ghost racer, so we need to have this on the GhostRacer as well.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `int holy_water() const`
+
+Description: A simple getter for the holy water count, checked in a few places like the ribbon as well as internally.
+
+Why here: This needs to operate on private properties of the ghost racer, so we need to have this on the GhostRacer as well.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `int racer_speed() const`
+
+Description: A simple getter for the racer speed, used to modulate the speed of all other objects and for cab AI. This is also part of the reason we need to have the GhostRacer setup with it's own speed and movement system. 
+
+Why here: This needs to operate on private properties of the ghost racer, so we need to have this on the GhostRacer as well.
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `bool collisionAvoidanceWorthy() const override`
+
+Description: Marks the class as being something that should avoid collisions. 
+
+Why here: All children classes should avoid collisions, so we can override this to return true here. 
+
+Why virtual (if applicable): Overrides the collision avoidance status because all subclasses need to be avoided. 
+
+## BorderLine
+
+### `BorderLine(int ImageID, double startX, double startY, StudentWorld* game_world)`
+
+Description: Constructs a general borderline, either white or yellow. Also pretty simple since most of the functionality is shared between borderlines. 
+
+Why here: The borderlines share a large part of their functionality, so it makes sense to abstract out all that similarity
+
+Why virtual (if applicable): N/A
+
+### `virtual ~BorderLine() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+### `void doSomething() override`
+
+Description: Moves the `BorderLines` down the screen. That's basically it.
+
+Why here: All `BorderLines` follow the same doSomething logic, so this can be here. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+## YellowBorderLine
+
+### `YellowBorderLine(bool left, double startY, StudentWorld* game_world)`
+
+Description: Constructs a yellow border line. This is abstracted out to simplify the start x logic, as it can only start with one of two possible x positions, we can simply construct it with which side it's on and the constructor can figure it out with a static func. 
+
+Why here: The YellowBorderLine has a different set of rules for x positioning to white lines, so it is created as it's own class. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `virtual ~YellowBorderLine() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+## WhiteBorderLine
+
+### `WhiteBorderLine(bool left, double startY, StudentWorld* game_world)`
+
+Description: Constructs a white border line. This is abstracted out to simplify the start x logic, as it can only start with one of two possible x positions, we can simply construct it with which side it's on and the constructor can figure it out with a static func. 
+
+Why here: The WhiteBorderLine has a different set of rules for x positioning to yellow lines, so it is created as it's own class. 
+
+Why virtual (if applicable): Doesn't need to be overridden by any subclass
+
+### `virtual ~WhiteBorderLine() { }`
+
+Description: Nothing.
+
+Why here: Need to explicitly specify a destructor if you want it to be virtual!
+
+Why virtual (if applicable): All destructors should be virtual!
+
+# Part 2 - Missing Functionality and Known Bugs
+
+I'm really proud of this, but as far as I know, I'm not missing anything and I've fixed all the bugs I've found so far! I'm almost certain there are more issues left, but I can't find anything and I've done a good bit of testing so far. I could have also missed a bullet point or two from the spec, but again nothing that I know of. 
+
+# Part 3 - Other Decisions and Assumptions
+
+## Issues with Multiple Inheritance
+
+In the case of the `GhostRacer`, I had to double implement movement and health rather than rely on the other base classes I had created already. This is because of the fact that multiple inheritance is nigh impossible in C++, at least without the ability to modify the `GraphObject` class (I was able to get it working but it was reliant on adding a default constructor and lazy initializer function to the `GraphObject` so it was a no-go). Without this ability, the `HasHealthActor` needed to be derived from the `CollidesWithPlayer`, which doesn't really make much sense for me to make the `GhostRacer` derived from as well. Instead of this, I just decide to add a bit of redundancy but I think makes the overall program better. 
+
+## Limited Use of Property Flags
+
+So it's best to use property flags defined for every actor and overridden for specific actors in order to detect what capabilities each actor has regarding projectile interactions and things. I totally agree with this and used it for a few things, including collision avoidance and projectile interaction, however for a number of properties including can be spun out and can be healed, there's only one actor that can receive these affects, the `GhostRacer`. Because we know this as a fact, it doesn't make very much sense to iterate over all the actors in order to find the one actor that can have these things done to it, as that would be terrible for performance since in some cases, it would add multiple full loops required every tick. We also already have a pointer to the `GhostRacer` stored in the `StudentWorld`, so it doesn't really actually make much sense to test for these properties through flags like that, and we can just directly preform the operations onto the `GhostRacer` through the aforementioned pointer. I understand and accept that this does make the whole thing a bit less modular and extensible in the future, but I believe this trade off is both worth it performance wise in this case and would be pretty easy to swap back to property flags if adding those were required to support, for example, multiple things being able to be spun out or healed. 
+
+# Class Inheritance Diagram
+
+Hope this helps make things more clear!
+
+```
+                                                 +--------------------+
+                                                 |    GraphObject     |
+                                                 +--------------------+
+                                                   |
+                                                   |
+                                                   v
+                         +-----------------+     +--------------------+     +-------------------------+
+                         |   GhostRacer    | <-- |       Actor        | --> |   HolyWaterProjectile   |
+                         +-----------------+     +--------------------+     +-------------------------+
+                                                   |
+                                                   |
+                                                   v
++------------------+     +-----------------+     +--------------------+     +-------------------------+
+| YellowBorderLine | <-- |   BorderLine    | <-- |    MovingActor     |     |       SoulGoodie        |
++------------------+     +-----------------+     +--------------------+     +-------------------------+
+                           |                       |                          ^
+                           |                       |                          |
+                           v                       v                          |
+                         +-----------------+     +--------------------+     +-------------------------+     +-----------------+
+                         | WhiteBorderLine |     | CollidesWithPlayer | --> |         Goodie          | --> |    OilSlick     |
+                         +-----------------+     +--------------------+     +-------------------------+     +-----------------+
+                                                   |                          |
+                                                   |                          |
+                                                   v                          v
+                                                 +--------------------+     +-------------------------+     +-----------------+
+                                                 |   HasHealthActor   |     | PlayerDestroyableGoodie | --> | HolyWaterGoodie |
+                                                 +--------------------+     +-------------------------+     +-----------------+
+                                                   |                          |
+                                                   |                          |
+                                                   v                          v
+                         +-----------------+     +--------------------+     +-------------------------+
+                         |    ZombieCab    | <-- | MovementPlanActor  | -+  |      HealingGoodie      |
+                         +-----------------+     +--------------------+  |  +-------------------------+
+                                                   |                     |
+                                                   |                     |
+                                                   v                     |
+                                                 +--------------------+  |
+                                                 |  HumanPedestrian   |  |
+                                                 +--------------------+  |
+                                                 +--------------------+  |
+                                                 |  ZombiePedestrian  | <+
+                                                 +--------------------+
+```
