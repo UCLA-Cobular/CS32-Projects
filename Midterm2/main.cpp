@@ -1,3 +1,7 @@
+//
+// Created by jdc10 on 2/23/2021.
+//
+
 #include <iostream>
 #include <cassert>
 
@@ -12,15 +16,15 @@ struct Node {
 // COMMENT AT THE END OF THE countLessers FUNCTION
 
 int countLessers(const Node *p) {
-    // Check if the node itself is null or if it's children are all null, and return 0
-    // I'm aware the three checks aren't strictly necessary as the same function is accomplished by the for loop below,
-    //  but I'm leaving them here for clarity and readability, as it makes sense to check them as an escape case first.
-    if (p == nullptr || (p->child[0] == nullptr && p->child[1] == nullptr && p->child[2] == nullptr)) return 0;
+    // Check if the node itself is null. The check for the children being null is carried out in the while loop below.
+    //  This is to further reduce the number of statements being used, I'm already below the limit but you know why not
+    //  be a bit more efficient
+    if (p == nullptr) return 0;
 
     // Sum up countLessers of the children nodes of this node and check if this node itself is a lesser at the same time
     int numLesserNodes = 0;
     bool isLesser = false;
-    for (const auto &childNode : p->child) {
+    for (const Node *childNode : p->child) {
         if (childNode != nullptr) {
             numLesserNodes += countLessers(childNode);
             if (p->data < childNode->data) isLesser = true;

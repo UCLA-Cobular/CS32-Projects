@@ -1,0 +1,20 @@
+# Homework 4
+
+## Question 2
+The one form of the insert function causes a compilation error because it makes a comparison, specifically `>`, on an instance of the templated class, and Coord does not have that defined, so the compiler doesn't allow for the use of that function on an Coord sequence.
+
+## Question 4b
+We need a way to pass down the previous filename for us to append the current filename to, and the current class setup just doesn't store that information for files further down the tree, so we're entirely dependant on the second parameter for this information. We could modify the files to store backreference to their parents and then it would be possible with single parameter override, but that's not really what was asked.
+
+## Question 5a
+The given code should be `O(N^3)` because of the three nested for loops, each of which iterates over all of N (in some cases N-1 or N-2, but that is basically N at large numbers, so we can just round to N). 
+
+## Question 5b
+The new code is also `O(N^3)`, despite the optimizations, but this really comes down to the way we calculate big O. Even though one of the loops goes to i, we round that to N because that's what it is in the worst case of the loop. When we make that assumption, it then becomes 3 nested loops to N. In reality, it will be faster but this information is just lost in the simplification of big O notation.
+
+## Question 6a
+This code will be `O(N)`. This is because we have two loops running one after the other, which by itself means it will be `O(2N)`, which rounds down to `O(N)`. Furthermore though, I'm pretty sure the second loop will start at `N` itself, making the whole thing actually `O(N)` to start with.
+
+## Question 6b
+This code will be `O(N)`, because we have two loops running one after the other, just like above. In this case, one of the loops visits 2 ItemType objects every loop and the other one visits 1 per loop, meaning there's a total of 3N visits being made total.
+Despite this sharing the same big O as 6a, it will likely be somewhat slower because if we look at the constants before we threw them away in the final big O notation, we can see that this problem does preform more operations per N, so it will likely be slower. However, this isn't necessarily guaranteed given they each preform different types of operations which might be optimized differently on different hardware, and in any case, the difference will not be nearly as large between them as something that would show up on a final rounded big O.
