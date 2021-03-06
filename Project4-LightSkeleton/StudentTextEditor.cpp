@@ -1,63 +1,49 @@
 #include "StudentTextEditor.h"
-#include "Undo.h"
 #include <string>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
 
-TextEditor* createTextEditor(Undo* un)
-{
-	return new StudentTextEditor(un);
+using namespace std;
+
+StudentTextEditor::StudentTextEditor(Undo *undo) {
+    // TODO
 }
 
-StudentTextEditor::StudentTextEditor(Undo* undo)
- : TextEditor(undo) {
-	// TODO
-}
-
-StudentTextEditor::~StudentTextEditor()
-{
-	// TODO
+StudentTextEditor::~StudentTextEditor() {
+    // TODO
 }
 
 bool StudentTextEditor::load(std::string file) {
-	return false;  // TODO
+    ifstream infile(file);  // infile is a name of our choosing
+    if (!infile)  // Did opening the file fail?
+    {
+        cerr << "Error: Cannot open data.txt!" << endl;
+        return false;
+    }
+    string s;
+    while (getline(infile, s)) {
+        linesList.push_back(cleanString(s));
+    }
+    return true;
 }
 
 bool StudentTextEditor::save(std::string file) {
-	return false;  // TODO
+    ofstream outfile(file);  // outfile is a name of our choosing
+    if (!outfile)  // Did opening the file fail?
+    {
+        cerr << "Error: Cannot open data.txt!" << endl;
+        return false;
+    }
+    for (const auto& line : linesList) {
+        outfile << line << '\n';
+    }
+    return true;
 }
 
-void StudentTextEditor::reset() {
-	// TODO
-}
-
-void StudentTextEditor::move(Dir dir) {
-	// TODO
-}
-
-void StudentTextEditor::del() {
-	// TODO
-}
-
-void StudentTextEditor::backspace() {
-	// TODO
-}
-
-void StudentTextEditor::insert(char ch) {
-	// TODO
-}
-
-void StudentTextEditor::enter() {
-	// TODO
-}
-
-void StudentTextEditor::getPos(int& row, int& col) const {
-	// TODO
-}
-
-void StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::string>& lines) const {
-	// TODO
-}
-
-void StudentTextEditor::undo() {
-	// TODO
+std::string StudentTextEditor::cleanString(std::string string) {
+    string.erase(remove(string.begin(), string.end(), '\r'), string.end());
+    string.erase(remove(string.begin(), string.end(), '\n'), string.end());
+    return string;
 }
