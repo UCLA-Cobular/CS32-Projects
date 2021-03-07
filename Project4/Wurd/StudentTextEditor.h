@@ -12,38 +12,38 @@ class StudentTextEditor : public TextEditor
 {
 public:
 
-	StudentTextEditor(Undo* undo);
-	virtual ~StudentTextEditor();
-	bool    load(std::string file) override;
-	bool    save(std::string file) override;
-	void    reset() override;
-	void    move(Dir dir) override;
-	void    del() override;
-	void    backspace() override;
-	void    insert(char ch) override;
-	void    enter() override;
-	void    getPos(int& row, int& col) const override;
-	int     getLines(int startRow, int numRows, std::vector<std::string>& lines) const override;
-	void    undo() override;
+    StudentTextEditor(Undo* undo);
+    virtual ~StudentTextEditor();
+    bool    load(std::string file) override;
+    bool    save(std::string file) override;
+    void    reset() override;
+    void    move(Dir dir) override;
+    void    del() override;
+    void    backspace() override;
+    void    insert(char ch) override;
+    void    enter() override;
+    void    getPos(int& row, int& col) const override;
+    int     getLines(int startRow, int numRows, std::vector<std::string>& lines) const override;
+    void    undo() override;
 
 private:
-	bool reEvaluateColPos();
-	
-	void move_up();
-	void move_down();
-	void move_left();
-	void move_right();
-	void move_home();
-	int  move_end();
-	std::string line() const;
+    bool       reEvaluateColPos();
+    bool isAtLineEnd() const;
 
-	static std::string     cleanString(std::string str);
-	
-	std::list<std::string> m_linesList;
-	std::list<std::string>::iterator m_lineIterator;
-	
-	int m_line;
-	int m_col;
+    void move_up();
+    void move_down();
+    void move_left();
+    void move_right();
+    void move_home();
+    int  move_end();
+
+    static std::string cleanString(std::string str);
+
+    std::list<std::string>           m_linesList;
+    std::list<std::string>::iterator m_lineIterator;
+
+    int m_line;
+    int m_col;
 };
 
 #endif // STUDENTTEXTEDITOR_H_

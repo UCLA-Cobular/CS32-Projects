@@ -102,13 +102,13 @@ void StudentTextEditor::move_left()
         const int prev_line = m_line;
         move_up();
         // If the line changed, then we know that we need to reset the column to zero because we went off the right edge actually to somewhere.
-        if (prev_line != m_line) { m_col = (*m_lineIterator).size(); }
+        if (prev_line != m_line) { m_col = m_lineIterator->size(); }
     }
 }
 
 void StudentTextEditor::move_right()
 {
-    if (m_col < (*m_lineIterator).size()) ++m_col;
+    if (m_col < m_lineIterator->size()) ++m_col;
     else
     {
         const int prev_line = m_line;
@@ -120,7 +120,7 @@ void StudentTextEditor::move_right()
 
 void StudentTextEditor::move_home() { m_col = 0; }
 
-int         StudentTextEditor::move_end() { return m_col = (*m_lineIterator).size(); }
+int StudentTextEditor::move_end() { return m_col = m_lineIterator->size(); }
 
 void StudentTextEditor::move(Dir dir)
 {
@@ -147,39 +147,89 @@ void StudentTextEditor::move(Dir dir)
     default:
         cerr << "Something has gone horribly wrong with Move!" << endl;
     }
-    // TODO
 }
 #pragma endregion
 
 
+bool StudentTextEditor::isAtLineEnd() const { return m_col == m_lineIterator->size(); }
+
 void StudentTextEditor::del()
 {
-    // TODO
+    // Handle end of line case, where we need to stitch two lines back together
+    if (isAtLineEnd())
+    {
+        // Do nothing if end of the final line (one less than the size)
+        if (m_line == m_linesList.size() - 1) return;
+        // Combine the current and below lines
+        string combinedString;
+        combinedString += (*m_lineIterator);
+        ++m_lineIterator;
+        combinedString += (*m_lineIterator);
+        m_lineIterator = m_linesList.erase(m_lineIterator); // Toss the line we're on right now
+        --m_lineIterator;
+        (*m_lineIterator) = combinedString;
+        return;
+    }
+
+    // Handle the normal "delete in the middle" case
+    m_lineIterator->erase(m_lineIterator->begin() + m_col);
 }
 
 void StudentTextEditor::backspace()
 {
-    // TODO
+    // Handle start of line case
+    if (m_col == 0)
+    {
+        // Do nothing if on the first (zeroth indexed) line
+        if (m_line == 0) return;
+        string combinedString;
+        combinedString += (*m_lineIterator);
+        m_lineIterator = m_linesList.erase(m_lineIterator);
+        --m_lineIterator; // We are now on the previous line from where we started
+        m_col = m_lineIterator->size();
+        m_lineIterator->append(combinedString);
+        m_line--;
+        return;
+    }
+    // Handle the normal "delete in the middle" case
+    m_lineIterator->erase(m_lineIterator->begin() + m_col - 1);
+    --m_col;
 }
 
 void StudentTextEditor::insert(char ch)
 {
     if (ch == '\t')
     {
-        line().insert(m_col, 4, ' ');
+        m_lineIterator->insert(m_col, 4, ' ');
         m_col += 4;
         return;
     }
-    line().insert(m_col, 1, ch);
+    m_lineIterator->insert(m_col, 1, ch);
     m_col++;
-    // TODO
 }
 
 void StudentTextEditor::enter()
 {
-    string str1 = line().substr(0, m_col);
-    string str2 = line().substr(m_col, line().size());
-    // TODO
+    // Handle cursor at end of line case
+    if (isAtLineEnd())
+    {
+        ++m_lineIterator;
+        m_linesList.insert(m_lineIterator, "");
+        --m_lineIterator;
+        m_line++;
+        m_col = 0;
+        return;
+    }
+    // Handle cursor in middle of line case
+    const string str1 = m_lineIterator->substr(0, m_col);
+    const string str2 = m_lineIterator->substr(m_col, m_lineIterator->size());
+    (*m_lineIterator) = str1; // Replace the current line
+    // list.insert works behind the iterator, so we need to go forward, insert, then go back
+    ++m_lineIterator;
+    m_linesList.insert(m_lineIterator, str2);
+    --m_lineIterator;
+    m_line++;
+    m_col = 0;
 }
 
 void StudentTextEditor::getPos(int& row, int& col) const
@@ -187,7 +237,6 @@ void StudentTextEditor::getPos(int& row, int& col) const
     row = m_line;
     col = m_col;
     return;
-    // TODO
 }
 
 int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::string>& lines) const
@@ -206,7 +255,6 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
         lines.push_back(*temp_lineIterator);
     }
 
-    // TODO
     return j;
 }
 
@@ -221,9 +269,9 @@ void StudentTextEditor::undo()
 /// <returns>True when it moves the column position, false otherwise</returns>
 bool StudentTextEditor::reEvaluateColPos()
 {
-    if (line().size() < m_col)
+    if (m_lineIterator->size() < m_col)
     {
-        m_col = line().size();
+        m_col = m_lineIterator->size();
         return true;
     }
     return false;
@@ -232,10 +280,8 @@ bool StudentTextEditor::reEvaluateColPos()
 // TODO: Speed up checking by checking the end of line only
 std::string StudentTextEditor::cleanString(std::string str)
 {
+    if (str.empty()) return "";
     if (str[str.length() - 1] == '\r') str.erase(str.end() - 1, str.end());
     if (str[str.length() - 1] == '\n') str.erase(str.end() - 1, str.end());
     return str;
 }
-
-std::string StudentTextEditor::line() const { return (*m_lineIterator); }
-
