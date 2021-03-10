@@ -12,6 +12,7 @@ SpellCheck* createSpellCheck() { return new StudentSpellCheck; }
 
 StudentSpellCheck::~StudentSpellCheck()
 {
+    delete m_trie;
     // TODO
 }
 

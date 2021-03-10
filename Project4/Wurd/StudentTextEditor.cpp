@@ -153,6 +153,25 @@ void StudentTextEditor::move(Dir dir)
 
 bool StudentTextEditor::isAtLineEnd() const { return m_col == m_lineIterator->size(); }
 
+void StudentTextEditor::raw_del_end_of_line()
+{
+    // Combine the current and below lines
+    string combinedString;
+    combinedString += (*m_lineIterator);
+    ++m_lineIterator;
+    combinedString += (*m_lineIterator);
+    m_lineIterator = m_linesList.erase(m_lineIterator); // Toss the line we're on right now
+    --m_lineIterator;
+    (*m_lineIterator) = combinedString;
+}
+
+char StudentTextEditor::raw_del_middle()
+{
+    const char deleted = m_lineIterator->at(m_col);
+    m_lineIterator->erase(m_lineIterator->begin() + m_col);
+    return deleted;
+}
+
 void StudentTextEditor::del()
 {
     // Handle end of line case, where we need to stitch two lines back together
@@ -160,19 +179,33 @@ void StudentTextEditor::del()
     {
         // Do nothing if end of the final line (one less than the size)
         if (m_line == m_linesList.size() - 1) return;
-        // Combine the current and below lines
-        string combinedString;
-        combinedString += (*m_lineIterator);
-        ++m_lineIterator;
-        combinedString += (*m_lineIterator);
-        m_lineIterator = m_linesList.erase(m_lineIterator); // Toss the line we're on right now
-        --m_lineIterator;
-        (*m_lineIterator) = combinedString;
+        raw_del_end_of_line();
+        getUndo()->submit(Undo::JOIN, m_line, m_col, '\0');
         return;
     }
 
     // Handle the normal "delete in the middle" case
-    m_lineIterator->erase(m_lineIterator->begin() + m_col);
+    const char deleted = raw_del_middle();
+    getUndo()->submit(Undo::DELETE, m_line, m_col, deleted);
+}
+
+void StudentTextEditor::raw_backspace_start_of_line()
+{
+    string combinedString;
+    combinedString += (*m_lineIterator);
+    m_lineIterator = m_linesList.erase(m_lineIterator);
+    --m_lineIterator; // We are now on the previous line from where we started
+    m_col = m_lineIterator->size();
+    m_lineIterator->append(combinedString);
+    m_line--;
+}
+
+char StudentTextEditor::raw_backspace_middle()
+{
+    const char deleted = m_lineIterator->at(m_col - 1);
+    m_lineIterator->erase(m_lineIterator->begin() + m_col - 1);
+    --m_col;
+    return deleted;
 }
 
 void StudentTextEditor::backspace()
@@ -182,35 +215,38 @@ void StudentTextEditor::backspace()
     {
         // Do nothing if on the first (zeroth indexed) line
         if (m_line == 0) return;
-        string combinedString;
-        combinedString += (*m_lineIterator);
-        m_lineIterator = m_linesList.erase(m_lineIterator);
-        --m_lineIterator; // We are now on the previous line from where we started
-        m_col = m_lineIterator->size();
-        m_lineIterator->append(combinedString);
-        m_line--;
+        raw_backspace_start_of_line();
+        getUndo()->submit(Undo::JOIN, m_line, m_col, '\0');
         return;
     }
     // Handle the normal "delete in the middle" case
-    m_lineIterator->erase(m_lineIterator->begin() + m_col - 1);
-    --m_col;
+    char deleted = raw_backspace_middle();
+    getUndo()->submit(Undo::DELETE, m_line, m_col, deleted);
 }
 
-void StudentTextEditor::insert(char ch)
+void StudentTextEditor::raw_insert(char ch)
 {
+    // Store the char into the undo stack, including the tab char as a tab.
     if (ch == '\t')
     {
         m_lineIterator->insert(m_col, 4, ' ');
         m_col += 4;
-        return;
     }
-    m_lineIterator->insert(m_col, 1, ch);
-    m_col++;
+    else
+    {
+        m_lineIterator->insert(m_col, 1, ch);
+        m_col++;
+    }
 }
 
-void StudentTextEditor::enter()
+void StudentTextEditor::insert(char ch)
 {
-    // Handle cursor at end of line case
+    raw_insert(ch);
+    getUndo()->submit(Undo::INSERT, m_line, m_col, ch);
+}
+
+void StudentTextEditor::raw_enter()
+{
     if (isAtLineEnd())
     {
         ++m_lineIterator;
@@ -218,18 +254,27 @@ void StudentTextEditor::enter()
         --m_lineIterator;
         m_line++;
         m_col = 0;
-        return;
     }
-    // Handle cursor in middle of line case
-    const string str1 = m_lineIterator->substr(0, m_col);
-    const string str2 = m_lineIterator->substr(m_col, m_lineIterator->size());
-    (*m_lineIterator) = str1; // Replace the current line
-    // list.insert works behind the iterator, so we need to go forward, insert, then go back
-    ++m_lineIterator;
-    m_linesList.insert(m_lineIterator, str2);
-    --m_lineIterator;
-    m_line++;
-    m_col = 0;
+    else
+    {
+        // Handle cursor in middle of line case
+        const string str1 = m_lineIterator->substr(0, m_col);
+        const string str2 = m_lineIterator->substr(m_col, m_lineIterator->size());
+        (*m_lineIterator) = str1; // Replace the current line
+        // list.insert works behind the iterator, so we need to go forward, insert, then go back
+        ++m_lineIterator;
+        m_linesList.insert(m_lineIterator, str2);
+        --m_lineIterator;
+        m_line++;
+        m_col = 0;
+    }
+}
+
+void StudentTextEditor::enter()
+{
+    // Handle cursor at end of line case
+    getUndo()->submit(Undo::SPLIT, m_line, m_col, '\0');
+    raw_enter();
 }
 
 void StudentTextEditor::getPos(int& row, int& col) const
@@ -260,6 +305,58 @@ int StudentTextEditor::getLines(int startRow, int numRows, std::vector<std::stri
 
 void StudentTextEditor::undo()
 {
+    int    row   = -1;
+    int    col   = -1;
+    int    count = -1;
+    string text;
+
+    Undo::Action action = getUndo()->get(row, col, count, text);
+
+    if (action != Undo::ERROR)
+    {
+        // If row is the larger number, move_down is true, and then we will increase m_line so the while loop will equalize eventually
+        const bool move_down = row - m_line > 0 ? true : false;
+        while (m_line - row != 0)
+        {
+            if (move_down)
+            {
+                ++m_lineIterator;
+                m_line++;
+            }
+            else
+            {
+                --m_lineIterator;
+                m_line--;
+            }
+        }
+        m_col = col;
+    }
+
+    switch (action)
+    {
+    case Undo::ERROR:
+        // Something has gone wrong, just return
+        return;
+    case Undo::INSERT:
+        // Need to insert from string to document at 
+        for (char ch : text) raw_insert(ch);
+        m_col = col;
+        break;
+    case Undo::SPLIT:
+        raw_enter();
+        m_col = col;
+        m_line--;
+        --m_lineIterator;
+        // TODO: Confirm the row and column are correctly assigned
+        break;
+    case Undo::DELETE:
+        for (int i = 0; i < count; i++) raw_backspace_middle();
+        break;
+    case Undo::JOIN:
+        raw_del_end_of_line();
+        break;
+    default: ;
+    }
     // TODO
 }
 

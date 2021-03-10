@@ -27,7 +27,7 @@ public:
     void    undo() override;
 
 private:
-    bool       reEvaluateColPos();
+    bool reEvaluateColPos();
     bool isAtLineEnd() const;
 
     void move_up();
@@ -36,6 +36,13 @@ private:
     void move_right();
     void move_home();
     int  move_end();
+
+    void raw_del_end_of_line();
+    char raw_del_middle();
+    void raw_backspace_start_of_line();
+    char raw_backspace_middle();
+    void raw_insert(char ch);
+    void raw_enter();
 
     static std::string cleanString(std::string str);
 
