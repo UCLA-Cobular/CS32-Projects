@@ -347,7 +347,6 @@ void StudentTextEditor::undo()
         m_col = col;
         m_line--;
         --m_lineIterator;
-        // TODO: Confirm the row and column are correctly assigned
         break;
     case Undo::DELETE:
         for (int i = 0; i < count; i++) raw_backspace_middle();
