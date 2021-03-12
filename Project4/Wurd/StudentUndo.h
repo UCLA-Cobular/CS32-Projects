@@ -17,8 +17,7 @@ public:
 private:
     struct CursorPos;
 
-    static Undo::Action invertAction(Undo::Action action);
-    void                emplaceOrBatch(Undo::Action action, CursorPos pos, char ch);
+    void emplaceOrBatch(Undo::Action action, CursorPos pos, char ch);
 
 
     struct CursorPos
@@ -36,13 +35,14 @@ private:
     ///
     /// Other notes:
     ///     * Batching is handled at submit time by comparing to the top of the stack.
+    ///     * Tabs are converted to spaces before submission. Nothing in undo should ever touch a tab.
     /// </summary>
     struct UndoObject
     {
         UndoObject(Undo::Action action, CursorPos cursor_pos, char data)
             : cursor_pos(cursor_pos), action(action), data(1, data) {}
 
-        int count() const { return data.size(); }
+        int         count() const { return data.size(); }
         std::string dataAsStr();
 
         CursorPos       cursor_pos = {0, 0};

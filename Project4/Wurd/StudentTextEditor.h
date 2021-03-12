@@ -13,7 +13,7 @@ class StudentTextEditor : public TextEditor
 public:
 
     StudentTextEditor(Undo* undo);
-    virtual ~StudentTextEditor();
+    virtual ~StudentTextEditor() = default;
     bool    load(std::string file) override;
     bool    save(std::string file) override;
     void    reset() override;

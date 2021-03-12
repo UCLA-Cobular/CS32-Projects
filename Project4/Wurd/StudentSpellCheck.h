@@ -24,7 +24,7 @@ private:
     /// Spellchecks and corrects the given word
     /// </summary>
     /// <param name="str">The given word</param>
-    /// <param name="pos">The position, should be zero when called</param>
+    /// <param name="pos">The positionposition, should be zero when called</param>
     /// <param name="max_suggestions">The max num of suggestions to give. TODO: need to finish this part. </param>
     /// <param name="similarWords">The vector through which words will be returned</param>
     /// <param name="currentNode">The node to analyze the children of</param>
@@ -60,6 +60,7 @@ private:
         char               value() const { return m_value; }
         std::vector<Node*> children() const { return m_children; }
         void               add_child(Node* node) { m_children.push_back(node); }
+        int                checkChar(char) const;
 
         /// <summary>
         /// Tries to find the given char in the list of children

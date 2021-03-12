@@ -12,21 +12,24 @@ using namespace std;
 
 TextEditor* createTextEditor(Undo* un) { return new StudentTextEditor(un); }
 
+/// <summary>
+/// Initializes the text editor, setting up the cursor and internal structures at the top of the first line.
+/// </summary>
 StudentTextEditor::StudentTextEditor(Undo* undo)
     : TextEditor(undo), m_line(0), m_col(0)
 {
     m_linesList.emplace_back("");
     m_lineIterator = m_linesList.begin();
-    // TODO
 }
 
-StudentTextEditor::~StudentTextEditor()
-{
-    // TODO
-}
-
+/// <summary>
+/// Loads a new file into the text editor. Sets up the 
+/// </summary>
+/// <param name="file"></param>
+/// <returns></returns>
 bool StudentTextEditor::load(std::string file)
 {
+    
     ifstream infile(file); // infile is a name of our choosing
     if (!infile) // Did opening the file fail?
     {
@@ -226,7 +229,6 @@ void StudentTextEditor::backspace()
 
 void StudentTextEditor::raw_insert(char ch)
 {
-    // Store the char into the undo stack, including the tab char as a tab.
     if (ch == '\t')
     {
         m_lineIterator->insert(m_col, 4, ' ');
@@ -242,7 +244,13 @@ void StudentTextEditor::raw_insert(char ch)
 void StudentTextEditor::insert(char ch)
 {
     raw_insert(ch);
-    getUndo()->submit(Undo::INSERT, m_line, m_col, ch);
+    if (ch == '\t')
+        for (int i = 4 - 1; i >= 0; --i)
+        {
+            // Saves a tab as 4 spaces
+            getUndo()->submit(Undo::INSERT, m_line, m_col - i, ' ');
+        }
+    else getUndo()->submit(Undo::INSERT, m_line, m_col, ch);
 }
 
 void StudentTextEditor::raw_enter()

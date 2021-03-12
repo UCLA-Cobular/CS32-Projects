@@ -7,6 +7,9 @@ using namespace std;
 
 Undo* createUndo() { return new StudentUndo; }
 
+/// <summary>
+/// Accepts a request to save something to the undo stack, adding it or batching it as needed. 
+/// </summary>
 void StudentUndo::submit(const Action action, int row, int col, char ch)
 {
     CursorPos pos = {row, col};
@@ -30,6 +33,9 @@ void StudentUndo::submit(const Action action, int row, int col, char ch)
     }
 }
 
+/// <summary>
+/// Gets the next undo on the stack. Handles converting the internal format to the requested format and providing the correct information for each type of request.
+/// </summary>
 StudentUndo::Action StudentUndo::get(int& row, int& col, int& count, std::string& text)
 {
     if (undoStack.empty()) return ERROR;
@@ -74,27 +80,14 @@ StudentUndo::Action StudentUndo::get(int& row, int& col, int& count, std::string
     return Action::ERROR; // TODO
 }
 
+/// <summary>
+/// Clears the undoStack in O(N)
+/// </summary>
 void StudentUndo::clear() { while (!undoStack.empty()) undoStack.pop(); }
 
-Undo::Action StudentUndo::invertAction(Undo::Action action)
-{
-    switch (action)
-    {
-    case ERROR:
-        cerr << "Received an error undo submission!" << endl;
-        return ERROR;
-    case INSERT:
-        return DELETE;
-    case SPLIT:
-        return JOIN;
-    case DELETE:
-        return INSERT;
-    case JOIN:
-        return SPLIT;
-    }
-    return Action::ERROR;
-}
-
+/// <summary>
+/// Handles the conditional logic on sometimes batching insertions and deletions, always does the right thing in my testing. 
+/// </summary>
 void StudentUndo::emplaceOrBatch(Undo::Action action, CursorPos pos, char ch)
 {
     // Avoid checking the top of an empty stack
@@ -111,7 +104,6 @@ void StudentUndo::emplaceOrBatch(Undo::Action action, CursorPos pos, char ch)
         // Sequential inserts without any other action
         if (top.action == INSERT && pos.row == top.cursor_pos.row && pos.col == top.cursor_pos.col + 1)
         {
-            cerr << "sequential insert" << endl;
             top.data.push_back(ch);
             top.cursor_pos.col = pos.col;
         }
@@ -125,14 +117,12 @@ void StudentUndo::emplaceOrBatch(Undo::Action action, CursorPos pos, char ch)
             // Same exact pos, this is an additional del keypress
             if (pos.col == top.cursor_pos.col && pos.row == top.cursor_pos.row)
             {
-                cerr << "sequential del" << endl;
                 top.data.push_back(ch);
                 flag = true;
             }
             // A few positions to the left, so this was an additional backspace keypress
             if (pos.col == top.cursor_pos.col - 1 && pos.row == top.cursor_pos.row)
             {
-                cerr << "sequential bksp" << endl;
                 top.data.push_front(ch);
                 // Ensures the cursor position is always at the start of the deletions
                 top.cursor_pos.col--;
@@ -144,11 +134,15 @@ void StudentUndo::emplaceOrBatch(Undo::Action action, CursorPos pos, char ch)
         break;
     case SPLIT:
     case ERROR:
-    case JOIN: default:
-        cerr << "Tried to batch an un-batchable submission!" << endl;
+    case JOIN:
+        break;
     }
 }
 
+/// <summary>
+/// Takes the list of chars in an undoObject and returns it as a string
+/// </summary>
+/// <returns>String form of the given data</returns>
 std::string StudentUndo::UndoObject::dataAsStr()
 {
     std::string str;

@@ -13,11 +13,11 @@ SpellCheck* createSpellCheck() { return new StudentSpellCheck; }
 StudentSpellCheck::~StudentSpellCheck()
 {
     delete m_trie;
-    // TODO
 }
 
 bool StudentSpellCheck::load(std::string dictionaryFile)
 {
+    Trie* new_trie = new Trie();
     ifstream infile(dictionaryFile); // infile is a name of our choosing
     if (!infile) // Did opening the file fail?
     {
@@ -26,7 +26,9 @@ bool StudentSpellCheck::load(std::string dictionaryFile)
     }
 
     string s;
-    while (getline(infile, s)) { m_trie->findOrCreateNodeForString(s); }
+    while (getline(infile, s)) { new_trie->findOrCreateNodeForString(s); }
+    delete m_trie;
+    m_trie = new_trie;
     return true;
 }
 
@@ -65,11 +67,11 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
                 // Weird ternary operator here accounts for the space or other garbage character in front of words in the middle of sentances, but not at the start
                 if (!isWordSpelledCorrect(line.substr(startOfWord, endOfWord - startOfWord), m_trie->baseNode()))
                 {
-                    Position position = { startOfWord, endOfWord - 1 };
+                    const Position position = { startOfWord, endOfWord - 1 };
                     problems.push_back(position);
                 }
             }
-            endOfWord = i + 1;
+            endOfWord   = i + 1;
             startOfWord = i + 1;
         }
     }
@@ -80,7 +82,7 @@ void StudentSpellCheck::spellCheckLine(const std::string& line, std::vector<Spel
         // Weird ternary operator here accounts for the space or other garbage character in front of words in the middle of sentances, but not at the start
         if (!isWordSpelledCorrect(line.substr(startOfWord, endOfWord - startOfWord), m_trie->baseNode()))
         {
-            Position position = { startOfWord, endOfWord };
+            const Position position = { startOfWord, endOfWord - 1 };
             problems.push_back(position);
         }
     }
@@ -153,6 +155,7 @@ bool StudentSpellCheck::isWordSpelledCorrect(const std::string& str, Node* curre
     if (nextNode != nullptr) { return isWordSpelledCorrect(str, nextNode, pos + 1); }
 
     // If not, we don't have a match, return false.
+    return false;
 }
 
 /// <summary>
