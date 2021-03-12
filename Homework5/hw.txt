@@ -1,0 +1,169 @@
+# Homework 5
+
+**I recommend viewing this in a markdown tool, or at least with a monospace font in order to make the trees easier to read.**
+
+## 1a. 
+Using the simplest binary search tree (BST) insertion algorithm (no balancing), show the tree that results after inserting into the above tree the nodes 80, 65, 78, 15, 32 and 25 in that order. (If you're not skilled with a drawing tool, use a simple text form of the tree. For example, the tree depicted above could be shown as
+
+```
+                           .----.
+               .-----------| 50 |----------------.
+               |           '----'                |
+               v                                 v
+            .----.                            .----.
+   .--------| 20 |----------.                 | 60 |---.
+   v        '----'          v                 '----'   v
+.----.                   .----.                     .----.
+| 10 |---.          .----| 40 |                 .---| 70 |----.
+'----'   v          v    '----'                 v   '----'    v
+      .----.     .----.                      .----.        .----.
+      | 15 | .---| 30 |----.                 | 65 |     .--| 80 |
+      '----' v   '----'    v                 '----'     v  '----'
+          .----.        .----.                       .----.
+          | 25 |        | 32 |                       | 78 |
+          '----'        '----'                       '----'
+```
+
+
+## 1b.
+After inserting the nodes mentioned in part a, what would be printed out by inorder, preorder, and postorder traversals of the tree (assume your traversal function prints out the number at each node as it is visited)?
+
+Inorder:
+`10|15|20|25|30|32|40|50|50|65|70|78|80`
+
+Preorder:
+`50|20|10|15|40|30|25|32|60|70|65|80|78`
+
+Postorder:
+`15|10|25|32|30|40|20|65|78|80|70|60|50`
+
+
+## 1c.
+After inserting the nodes mentioned in part a, what is the resulting BST after you delete the node 30, then the node 20? (Again, just use a simple deletion algorithm with no balancing. If you have an option of making a choice, any correct choice is acceptable.)
+
+```
+                   .----.
+            .------| 50 |-----.
+            v      '----'     v
+         .----.            .----.
+    .----| 15 |-----.      | 60 |---.
+    v    '----'     v      '----'   v
+.----.          .----.          .----.
+| 10 |     .----| 40 |      .---| 70 |----.
+'----'     v    '----'      v   '----'    v
+        .----.           .----.        .----.
+        | 25 |----.      | 65 |     .--| 80 |
+        '----'    v      '----'     v  '----'
+                .----.            .----.
+                | 32 |            | 78 |
+                '----'            '----'
+```
+
+
+## 2a. 
+Show a C++ structure/class definition for a binary tree node that has both child node pointers and a parent node pointer. Assume the data stored in each node is an int.
+
+```c++
+class DoublyLinkedBinaryTree {
+public:
+    // Constructors - one for each use case
+    DoublyLinkedBinaryTree(int data) : m_data(data), m_parent(nullptr), m_left_child(nullptr), m_right_child(nullptr) {}
+    DoublyLinkedBinaryTree(int data, DoublyLinkedBinaryTree *parent) : m_data(data), m_parent(parent), m_left_child(nullptr), m_right_child(nullptr) {}
+    DoublyLinkedBinaryTree(int data, DoublyLinkedBinaryTree *left_child, DoublyLinkedBinaryTree *right_child) : m_data(data), m_parent(nullptr), m_left_child(left_child), m_right_child(right_child) {}
+    DoublyLinkedBinaryTree(int data, DoublyLinkedBinaryTree *parent, DoublyLinkedBinaryTree *left_child, DoublyLinkedBinaryTree *right_child) : m_data(data), m_parent(parent), m_left_child(left_child), m_right_child(right_child) {}
+
+    // Linking funcs for re-attaching things at later times
+    void linkParent(DoublyLinkedBinaryTree *parent) { m_parent = parent; }
+    void linkLeftChild(DoublyLinkedBinaryTree *left_child) { m_left_child = left_child; }
+    void linkRightChild(DoublyLinkedBinaryTree *right_child) { m_right_child = right_child; }
+
+    // Accessors for following the pointers
+    DoublyLinkedBinaryTree *parent() {return m_parent; }
+    DoublyLinkedBinaryTree *left_child() {return m_left_child; }
+    DoublyLinkedBinaryTree *right_child() {return m_right_child; }
+private:
+    // The member vars
+    int data;
+    DoublyLinkedBinaryTree *m_parent;
+    DoublyLinkedBinaryTree *m_left_child;
+    DoublyLinkedBinaryTree *m_right_child;
+};
+```
+
+## 2b.
+
+```c++
+void insertIntoTree(subTreePtr, parentNNodePtr, newNodePtr){
+    else if (subTreePtr->getItem() > newNodePtr->getItem()) {
+        tempPtr = insertIntoTree(subTreePtr->left_child(), subTreePtr, newNodePtr)
+        subTreePtr->linkLeftChild(tempPtr)
+        subTreePtr->linkParent(parentPtr)
+    }
+    else {
+        tempPtr = insertIntoTree(subTreePtr->right_child(), subTreePtr, newNodePtr)
+        subTreePtr->linkRightChild(tempPtr)
+        subTreePtr->linkParent(parentPtr)
+    }
+    return subTreePtr
+}
+```
+
+## 3a. 
+Show the resulting heap (As in problem 1a, show the tree in some recognizable form.)
+
+```
+                 .----.
+          .------| 7  |--------.
+          v      '----'        v
+       .----.               .----.
+   .---| 5  |----.      .---| 6  |
+   v   '----'    v      v   '----'
+.----.        .----. .----.       
+| 4  |        | 0  | | 2  |     
+'----'        '----' '----'       
+```
+
+
+## 3b.
+Show how your heap from part a would be represented in an array.
+
+`7|5|6|4|0|2`  
+`0 1 2 3 4 5`
+
+## 3c. 
+After executing h.remove(item); one more time, show the array that results.
+
+`7|5|2|4|0`  
+`0 1 2 3 4`
+
+## 4a.
+vector<pair<string, list<int>>>, where each pair in the outer vector represents a course and all the students in that class, with those students being sorted in order. The pairs are in no particular order in the outer vector. What is the big-O complexity to determine whether a particular student s is enrolled in course c?
+`O(C+S)`
+
+## 4b. 
+map<string, list<int>>, where the students in each list are in no particular order. What is the big-O complexity to determine whether a particular student s is enrolled in course c?
+`O(logC + S)`
+
+## 4c. 
+map<string, set<int>>. What is the big-O complexity to determine whether a particular student s is enrolled in course c?
+`O(logC + logS)`
+
+## 4d. 
+unordered_map<string, set<int>>. What is the big-O complexity to determine whether a particular student s is enrolled in course c?
+`O(logS)
+
+## 4e. 
+unordered_map<string, unordered_set<int>>. What is the big-O complexity to determine whether a particular student s is enrolled in course c?
+`O(1)`
+
+## 4f. 
+Suppose we have the data structure map<string, set<int>> and we wish for a particular course c to write the id numbers of all the students in that course in sorted order. What is the big-O complexity?
+`O(logC + S)`
+
+## 4g.
+Suppose we have the data structure unordered_map<string, unordered_set<int>> and we wish for a particular course c to write the id numbers of all the students in that course in sorted order (perhaps using an additional container to help with that). What is the big-O complexity?
+`O(S*logS + S)` -> `O(S*logS)` (final answer)
+
+# 4f.
+Suppose we have the data structure unordered_map<string, set<int>> and we wish for a particular student s to write all the courses that student is enrolled in, in no particular order. What is the big-O complexity?
+`O(C*logS)`
